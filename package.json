@@ -40,7 +40,7 @@
                                "perMachine":  false,
                                "allowToChangeInstallationDirectory":  true,
                                "shortcutName":  "SAMOT Admin",
-                               "installerIcon":  "assets/iconAdmin.ico",
+                               "installerIcon":  "assets/iconAdmin.ico", "artifactName":  "SAMOT-Admin-Setup.exe",
                                "uninstallerIcon":  "assets/iconAdmin.ico"
                            }
               },
