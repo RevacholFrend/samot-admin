@@ -355,9 +355,11 @@ function syncSuperOnly() {
 
 function renderProjectSelect() {
   const sel = $('#project-select');
-  sel.innerHTML = state.projects.map((p) =>
-    `<option value="${p.id}" ${p.id === state.currentProjectId ? 'selected' : ''}>${escapeHtml(p.logo || '🎮')} ${escapeHtml(p.name)}${p.role ? ' · ' + p.role : ''}${p.is_hidden ? ' [скрыт]' : ''}${p.approved === false ? ' [не опубликован]' : ''}</option>`
-  ).join('');
+  sel.innerHTML = state.projects.map((p) => {
+    // <option> не поддерживает <img> — URL-лого показываем нейтральным эмодзи
+    const logoText = (p.logo && /^https?:/i.test(p.logo)) ? '🎮' : (p.logo || '🎮');
+    return `<option value="${p.id}" ${p.id === state.currentProjectId ? 'selected' : ''}>${escapeHtml(logoText)} ${escapeHtml(p.name)}${p.role ? ' · ' + p.role : ''}${p.is_hidden ? ' [скрыт]' : ''}${p.approved === false ? ' [не опубликован]' : ''}</option>`;
+  }).join('');
 }
 
 $('#project-select').addEventListener('change', async (e) => {
