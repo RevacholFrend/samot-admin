@@ -49,9 +49,15 @@
 
 ## Скриншоты
 
+Демонстрационные экраны — проект «SuperTuxKart» в демо-режиме (свободный kart-гонщик, GPLv3).
+
 <p align="center">
   <img src="docs/screenshots/admin-panel.png" alt="SAMOT Admin: новости и баннеры" width="49%">
   <img src="docs/screenshots/packager.png" alt="SAMOT Packager" width="49%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/launcher-main.png" alt="Что видит игрок: главная лаунчера" width="49%">
+  <img src="docs/screenshots/launcher-download.png" alt="Скачивание: прогресс, скорость, пауза" width="49%">
 </p>
 
 ## Как выпустить свою игру
@@ -76,6 +82,8 @@ npm run dist       # собрать установщик (dist/SAMOT Admin Setup
 ```
 
 > Два репозитория держим синхронными по `src/config.js` и `src/documents.js` — при правках меняйте в обоих.
+
+> Демо-иллюстрации: SuperTuxKart (свободный kart-гонщик, GPLv3) — учебный пример заполнения проекта. Изображения — Unsplash.
 
 ## Лицензия
 
