@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://noskgnbkghuyiremujcl.supabase.co wss://noskgnbkghuyiremujcl.supabase.co; form-action 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAMOT — Редактирование проекта</title>
+  <link rel="icon" href="../assets/logoAdmin.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #1b1b21;
+      --card: #22222a;
+      --card-2: #2a2a33;
+      --border: #33333d;
+      --text: #f2f2f7;
+      --text-dim: #9aa4b2;
+      --text-faint: #6f7887;
+      --accent: #ff8c1a;
+      --accent-grad: linear-gradient(135deg, #ff9a1f 0%, #ff6a00 100%);
+      --ok: #2ee6a8;
+      --warn: #ffc94d;
+      --danger: #ff5c7a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 18px; border-bottom: 1px solid var(--border); background: #16161d;
+      height: 56px; flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .header-logo { width: 28px; height: 28px; background: var(--accent-grad); display: grid; place-items: center; font-weight: 900; color: #fff; font-size: 14px; }
+    .header-title { font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+    .header-title b { color: var(--text); font-weight: 700; }
+    .header-right { display: flex; gap: 10px; flex-shrink: 0; }
+
+    .btn-save, .btn-exit { border: 1px solid transparent; padding: 10px 18px; font-size: .9rem; font-weight: 700; color: #fff; cursor: pointer; transition: filter .15s, opacity .15s; border-radius: 0; }
+    .btn-save { background: rgba(46,230,168,.18); border-color: rgba(46,230,168,.5); color: #92eec4; }
+    .btn-save:hover { background: rgba(46,230,168,.32); }
+    .btn-exit { background: rgba(255,92,122,.18); border-color: rgba(255,92,122,.5); color: #ffbac6; }
+    .btn-exit:hover { background: rgba(255,92,122,.32); }
+    .btn-save:disabled { opacity: .55; cursor: progress; }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 18px;
+      overflow: visible;
+      min-height: auto;
+      flex: none;
+    }
+
+    .editor-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; }
+    @media (max-width: 1100px) { .editor-layout { grid-template-columns: 1fr; } }
+
+    .editor-layout > .col-left, .editor-layout > .col-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+    .full-span { grid-column: auto; }
+
+    .gallery-stage { aspect-ratio: 16/9; }
+
+    .card { background: var(--card); border: 1px solid var(--border); padding: 10px 12px; border-radius: 0; position: relative; }
+
+    .edit-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--text-dim); font-size: .72rem; padding: 4px 8px; cursor: pointer; border-radius: 0; z-index: 2; }
+    .edit-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    .gallery { display: grid; gap: 8px; }
+    .gallery-stage { position: relative; aspect-ratio: 16/9; background: #0e0e14; overflow: hidden; }
+    .gallery-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-faint); font-size: .9rem; text-align: center; padding: 0 16px; }
+
+    .gallery-thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .thumb { flex: 0 0 110px; aspect-ratio: 16/9; border: 2px solid transparent; overflow: hidden; background: #13131a; padding: 0; cursor: pointer; }
+    .thumb.active { border-color: var(--accent); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .section-head { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-bottom: 1px solid var(--border); margin: -10px -12px 12px; background: rgba(255,255,255,.04); }
+    .section-title { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); }
+
+    .info-card { display: flex; gap: 14px; }
+    .card-art { width: 160px; height: 160px; flex-shrink: 0; object-fit: cover; background: var(--card-2); border: 1px solid var(--border); }
+    .info-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .info-name { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+    .info-tagline { color: var(--text-dim); font-size: .85rem; }
+    .info-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; font-size: .82rem; }
+    .info-row dt { color: var(--text-faint); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; align-self: center; }
+    .info-row dd { color: var(--text); margin: 0; overflow-wrap: anywhere; }
+
+    .button-action { display: block; width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 800; color: #fff; background: var(--accent-grad); border: none; cursor: pointer; border-radius: 0; letter-spacing: .03em; }
+    .button-action:disabled { opacity: .5; }
+
+    .desc { font-size: .85rem; line-height: 1.6; color: var(--text-dim); max-height: 200px; overflow-y: auto; padding: 8px; background: var(--card-2); border: 1px solid var(--border); }
+
+    .notes-view { font-size: .83rem; color: var(--text); line-height: 1.55; padding: 8px; background: var(--card-2); border: 1px solid var(--border); max-height: 180px; overflow-y: auto; white-space: pre-wrap; }
+
+    .news-list { display: flex; flex-direction: column; gap: 6px; }
+    .news-item { display: flex; gap: 10px; padding: 8px; background: var(--card-2); border: 1px solid var(--border); }
+    .news-thumb { width: 80px; height: 50px; flex-shrink: 0; background: var(--card-2); object-fit: cover; }
+    .news-meta { flex: 1; min-width: 0; }
+    .news-meta b { font-size: .85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .news-meta span { font-size: .72rem; color: var(--text-faint); }
+
+    .row-list { display: flex; flex-direction: column; gap: 6px; }
+    .row-item { display: flex; gap: 8px; align-items: center; }
+
+    .full-span { grid-column: 1 / -1; }
+
+    .pending-badge { position: absolute; top: 8px; right: 50px; font-size: .68rem; padding: 4px 8px; background: rgba(255,201,77,.16); border: 1px solid var(--warn); color: #ffd985; border-radius: 0; }
+
+    .hint { color: var(--text-faint); font-size: .72rem; padding: 8px 10px 0; }
+
+    .section-with-edit { position: relative; }
+
+    .empty-state { text-align: center; color: var(--text-faint); padding: 40px; }
+
+    .news-edit-banner { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,140,26,.18); border: 1px solid var(--accent); color: #ffd6a0; padding: 10px 18px; z-index: 100; }
+
+    .editor-price { display: flex; gap: 10px; align-items: center; padding: 8px; background: var(--card-2); border: 1px dashed var(--border); }
+    .icon-btn-small { background: transparent; border: 1px solid transparent; color: var(--text-faint); font-size: .8rem; padding: 4px 6px; cursor: pointer; }
+    .icon-btn-small:hover { color: var(--text); background: rgba(255,255,255,.05); border-color: var(--border); }
+
+    textarea.notes-edit { width: 100%; min-height: 120px; background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px; font-family: Consolas, monospace; font-size: .8rem; resize: vertical; border-radius: 0; }
+    input[type="text"], input[type="url"], input[type="number"], select, textarea { outline: none; }
+    .hidden { display: none !important; }
+
+    /* Модальное окно замены confirm() */
+    .ui-modal-backdrop { position: fixed; inset: 0; z-index: 500; background: rgba(6,9,16,.66); backdrop-filter: blur(3px); display: grid; place-items: center; padding: 20px; }
+    .ui-modal { width: min(460px, 100%); background: var(--card); border: 1px solid var(--border); border-radius: 0; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .ui-modal-title { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: var(--text-dim); }
+    .ui-modal-title.danger { color: #ffadc0; }
+    .ui-modal-msg { font-size: .9rem; color: var(--text); line-height: 1.45; white-space: pre-wrap; }
+    .ui-modal-input { background: var(--card-2); border: 1px solid var(--border); color: var(--text); font: inherit; padding: 10px 12px; }
+    .ui-modal-error { color: #ffadc0; font-size: .8rem; border: 1px solid rgba(255,92,122,.4); background: rgba(255,92,122,.08); padding: 6px 10px; }
+    .ui-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+    .btn-danger { background: rgba(255,92,122,.12); border: 1px solid rgba(255,92,122,.45); color: #ffadc0; }
+    .btn-danger:hover { background: rgba(255,92,122,.25); color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="header-logo">S</div>
+      <div class="header-title">Редактор проекта <b id="header-project-name">—</b></div>
+    </div>
+    <div class="header-right">
+      <button class="btn-exit" id="btn-exit">Выйти без сохранения</button>
+      <button class="btn-save" id="btn-save">✓ Сохранить</button>
+    </div>
+  </header>
+
+  <main id="editor-root">
+    <p class="hint">Загрузка проекта…</p>
+  </main>
+
+  <div id="edit-modal" class="hidden" style="position: fixed; inset: 0; z-index: 200; place-items: center; background: rgba(0,0,0,.55); backdrop-filter: blur(4px);">
+    <div style="background: var(--card); border: 1px solid var(--border); padding: 16px 18px; width: min(520px, 92vw); max-height: 80vh; overflow-y: auto;">
+      <h3 id="edit-modal-title" style="margin-bottom: 8px; font-size: .95rem;">Редактирование</h3>
+      <div id="edit-modal-field" style="margin: 10px 0;"></div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top: 10px;">
+        <button class="btn-exit" id="edit-modal-cancel" style="padding: 10px 18px;">Отмена</button>
+        <button class="btn-save" id="edit-modal-save" style="padding: 10px 18px;">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../node_modules/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="../config.js"></script>
+  <script>window.CFG = window.APP_CONFIG;</script>
+  <script src="editor.js"></script>
+</body>
+</html>

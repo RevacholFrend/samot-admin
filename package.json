@@ -1,0 +1,53 @@
+{
+  "name": "samot-admin",
+  "version": "1.0.0",
+  "description": "SAMOT Admin — панель администратора и разработчика: проекты, новости, обновления клиента, баны, аналитика.",
+  "main": "admin-main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron admin-main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis",
+    "dist:signed": "npm run dist && powershell -NoProfile -ExecutionPolicy Bypass -File tools/sign.ps1 -FilePath \"dist/SAMOT Admin Setup 1.0.0.exe\"",
+    "sign": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/sign.ps1",
+    "test": "node --test tests/integrity.test.cjs",
+    "test:smoke": "node tests/smoke.cjs",
+    "test:all": "node --test tests/ && node tests/smoke.cjs",
+    "packager": "electron tools/packager/packager-main.cjs",
+    "dist:packager": "electron-builder --win portable --config electron-builder.packager.json",
+    "dist:packager:signed": "npm run dist:packager && powershell -NoProfile -ExecutionPolicy Bypass -File tools/sign.ps1 -FilePath \"dist-packager/SAMOT-Packager-1.0.0.exe\""
+  },
+  "build": {
+    "appId": "com.samot.admin",
+    "productName": "SAMOT Admin",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "admin-main.js",
+      "admin-preload.js",
+      "src/config.js",
+      "src/admin/**",
+      "assets/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/iconAdmin.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "SAMOT Admin",
+      "installerIcon": "assets/iconAdmin.ico",
+      "uninstallerIcon": "assets/iconAdmin.ico"
+    }
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "adm-zip": "^0.6.1"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

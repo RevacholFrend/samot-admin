@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <title>SAMOT Packager — сборка игры для релиза</title>
+  <link rel="icon" type="image/png" href="../../assets/iconAdmin.png" />
+  <link rel="stylesheet" href="packager.css" />
+</head>
+<body>
+  <header class="top">
+    <img src="../../assets/iconAdmin.png" alt="SAMOT" class="logo" />
+    <div>
+      <h1>SAMOT Packager</h1>
+      <p class="sub">Собирает папку игры в релиз для GitHub Releases: паки с SHA-256 + манифест + инструкция.</p>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <div class="step"><span class="step-n">1</span><h2>Папка с готовой игрой</h2></div>
+      <div class="row">
+        <input id="src" type="text" readonly placeholder="Выберите папку…" />
+        <button id="btn-src" class="btn ghost" type="button">Выбрать…</button>
+      </div>
+      <p class="hint">Внутри должны быть финальные файлы игры — без исходников, .git, node_modules.</p>
+    </section>
+
+    <section class="card">
+      <div class="step"><span class="step-n">2</span><h2>Точка входа (.exe, для кнопки «Играть»)</h2></div>
+      <select id="entry" disabled><option>Сначала выберите папку с игрой…</option></select>
+      <p class="hint" id="entry-hint">Определяется автоматически: единственный .exe выбирается сам, иначе — самый большой.</p>
+    </section>
+
+    <section class="card">
+      <div class="step"><span class="step-n">3</span><h2>Версия и тег релиза</h2></div>
+      <div class="grid-3">
+        <label>Версия игры
+          <input id="version" type="text" value="1.0.0" inputmode="decimal" spellcheck="false" />
+        </label>
+        <label>Тег релиза
+          <input id="tag" type="text" value="v1.0.0" spellcheck="false" />
+        </label>
+        <label>Размер пака, MB
+          <input id="pack-size" type="number" value="200" min="32" max="1500" />
+        </label>
+      </div>
+      <p class="hint">Тег уйдёт в манифест (<code>manifest.tag</code>) и в инструкцию по публикации.</p>
+    </section>
+
+    <section class="card">
+      <div class="step"><span class="step-n">4</span><h2>Папка результата</h2></div>
+      <div class="row">
+        <input id="target" type="text" readonly placeholder="По умолчанию: рядом с игрой, папка game-dist" />
+        <button id="btn-target" class="btn ghost" type="button">Выбрать…</button>
+      </div>
+      <p class="hint">Содержимое папки (<code>pack-*.zip</code> + <code>manifest.json</code>) просто прикрепляется к релизу.</p>
+    </section>
+
+    <section class="actions">
+      <button id="btn-build" class="btn primary big" type="button">Собрать релиз</button>
+      <button id="btn-open" class="btn ghost hidden" type="button">Открыть папку результата</button>
+      <button id="btn-copy" class="btn ghost hidden" type="button">Скопировать команду публикации</button>
+    </section>
+
+    <div id="warn" class="warn hidden"></div>
+
+    <section class="card log-card">
+      <div class="logs-head">
+        <h2>Журнал сборки</h2>
+        <span id="status" class="status idle">ожидание</span>
+      </div>
+      <pre id="log" class="log">Нажмите «Собрать релиз» — здесь появится ход сборки.</pre>
+    </section>
+  </main>
+
+  <script src="packager.js"></script>
+</body>
+</html>

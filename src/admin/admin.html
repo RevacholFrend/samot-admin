@@ -1,0 +1,1031 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://noskgnbkghuyiremujcl.supabase.co wss://noskgnbkghuyiremujcl.supabase.co; form-action 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAMOT — Админка</title>
+  <link rel="icon" href="../../assets/logoAdmin.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <!-- ═══════════ ВХОД ═══════════ -->
+  <section id="admin-auth" class="auth-wrap">
+    <div class="auth-card">
+      <img class="auth-logo" src="../../assets/logoAdmin.svg" alt="logo" />
+      <h1>SAMOT — Админка</h1>
+      <p class="auth-sub">Управление вашими проектами</p>
+
+      <form id="admin-login-form" style="display:grid; gap:12px; text-align:left;">
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="admin-email" required placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <label class="field">
+          <span>Пароль</span>
+          <input type="password" id="admin-password" required placeholder="••••••••" autocomplete="current-password" />
+        </label>
+        <p class="form-error" id="admin-login-error"></p>
+        <button type="submit" class="btn btn-primary btn-block" id="admin-login-submit">Войти</button>
+      </form>
+
+      <div class="auth-divider"><span>или</span></div>
+
+      <button type="button" class="btn btn-google btn-block" id="admin-google-btn">
+        <svg class="g-logo" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.13 4.13 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.09A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        <span>Войти через Google</span>
+      </button>
+      <p class="auth-hint">Google — самый удобный вход. Доступ: участники проекта (роли «owner»/«editor»).</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ НЕТ ПРАВ ═══════════ -->
+  <section id="admin-denied" class="auth-wrap hidden">
+    <div class="auth-card">
+      <h1>⛔ Нет доступа</h1>
+      <p class="auth-sub" id="admin-denied-text">Этот аккаунт не является администратором ни одного проекта.</p>
+      <button class="btn btn-ghost btn-block" id="btn-denied-logout">Выйти</button>
+    </div>
+  </section>
+
+  <!-- ═══════════ НЕТ ПРОЕКТОВ (первый запуск) ═══════════ -->
+  <section id="admin-noproj" class="auth-wrap hidden">
+    <div class="auth-card">
+      <img class="auth-logo" src="../../assets/logoAdmin.svg" alt="logo" />
+      <h1>Проектов пока нет</h1>
+      <p class="auth-sub">Создайте первый проект — и он появится в лаунчере всех игроков.</p>
+      <button class="btn btn-primary btn-block" id="btn-first-project">➕ Создать проект</button>
+      <button class="btn btn-ghost btn-block" id="btn-noproj-logout">Выйти</button>
+    </div>
+  </section>
+
+  <div id="admin-panel" class="admin-layout hidden">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <img src="../../assets/logoAdmin.svg" alt="logo" />
+        <div>
+          <strong>SAMOT</strong>
+          <span>admin</span>
+        </div>
+      </div>
+
+      <div class="side-projects">
+        <div class="side-title">Проект</div>
+        <div class="project-switch">
+          <select id="project-select"></select>
+        </div>
+        <button class="btn-new-project super-only hidden" id="btn-new-project">➕ Новый проект</button>
+      </div>
+
+      <div class="side-title" style="margin-top:12px">Разделы</div>
+      <nav class="side-nav">
+                        <button class="side-link super-only hidden" data-tab="tab-home">🏠 Главная</button>
+        <button class="side-link" data-tab="tab-news">📰 Новости проекта</button>
+        <button class="side-link" data-tab="tab-settings">⚙️ Настройки проекта</button>
+        <button class="side-link super-only hidden" data-tab="tab-updates">🔄 Обновления клиента</button>
+        <button class="side-link" data-tab="tab-bugreport">🐞 Баг-репорты</button>
+        <button class="side-link" data-tab="tab-game">📦 Релиз и манифест</button>
+        <button class="side-link" data-tab="tab-members">👥 Команда проекта</button>
+        <button class="side-link super-only hidden" data-tab="tab-bans">⛔ Баны и разбаны</button>
+        <button class="side-link super-only hidden" data-tab="tab-devices">🔍 Игроки</button>
+        <button class="side-link super-only hidden" data-tab="tab-analytics">📊 Аналитика</button>
+        <button class="side-link super-only hidden" data-tab="tab-admins">🛠 Разработчики</button>
+        <button class="side-link" data-tab="tab-dev">📎 Разработчику</button>
+        <button class="side-link" data-tab="tab-wiki">📚 Вики</button>
+        <button class="side-link" data-tab="tab-docs">📄 Документы</button>
+        <button class="side-link super-only hidden" data-tab="tab-audit">📜 Админ-лог</button>
+</nav>
+
+      <div class="side-footer">
+        <span class="side-user" id="side-user-email">—</span>
+        <button class="btn btn-ghost btn-sm btn-block" id="btn-admin-logout">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="unpublished-banner hidden" id="unpublished-banner" style="background:rgba(255,180,0,.14); border:1px solid rgba(255,180,0,.5); color:#ffd580; padding:10px 14px; border-radius:8px; margin-bottom:12px; display:flex; align-items:center; gap:10px; font-size:.86rem;">
+        <span>⚠️</span>
+        <span><b>Проект не опубликован.</b> Игроки его не видят. Нажмите «Опубликовать проект» ниже, чтобы выпустить его в эфир.</span>
+      </div>
+
+      <!-- ── TAB: НОВОСТИ ── -->
+            <!-- ══════════ ГЛАВНАЯ (только super) ══════════ -->
+      <section class="tab-page hidden" id="tab-home">
+        <div class="page-head"><h2>🏠 Главная лаунчера</h2></div>
+        <p class="page-sub">Что видят игроки на публичной «Главной». Перетаскивайте проекты мышкой: из нижнего списка — в карусель, внутри карусели — меняйте порядок, «×» — убрать из карусели.</p>
+
+        <div class="card">
+          <h3>Карусель на Главной</h3>
+          <p class="page-sub" style="margin:4px 0 10px">Порядок совпадает с порядком миниатюр. Перетаскивайте, чтобы менять.</p>
+          <div id="home-carousel-list" class="home-carousel-list home-drop-target"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3>Все проекты — перетащите в карусель</h3>
+          <p class="page-sub" style="margin:4px 0 10px">Выберите, что показывать на Главной. Проекты без баннера сюда не попадают на «Главную» — их можно добавить, но игроки увидят заглушку.</p>
+          <div id="home-all-list" class="home-all-list home-drop-target"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3>Новости на Главной</h3>
+          <p class="page-sub" style="margin:4px 0 10px">Показываются всем игрокам на «Главной». Убрать с Главной — кнопкой ниже; вернуть — флажком «Показывать в «Последних новостях» на Главной» в редакторе новости.</p>
+          <div id="home-news-admin-list"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <div class="section-head" style="margin: -10px -12px 12px -12px;"><span class="section-title">Официальные постеры SAMOT</span>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-add-featured" style="margin-left:auto">➕ Новый постер</button>
+          </div>
+          <p class="page-sub" style="margin-top:6px">Отдельные рекламные слайды для карусели «Главной» — например, «Запуск v1.0.0», «SAMOT Summer Sale», «1000 игроков в Discord». Применяются только по клику «Опубликовать». Клик по изображениям — на CTA.</p>
+          <div id="featured-list" class="featured-list"><p class="page-sub">Загружаем…</p></div>
+
+          <div id="featured-form" class="hidden" style="margin-top:14px; padding:12px; border:1px solid var(--border); background: var(--card-2);">
+            <div class="sp-title" style="margin-bottom:10px" id="featured-form-title">Новый постер</div>
+            <label class="field span-2">
+              <span>Заголовок *</span>
+              <input type="text" id="sf-featured-title" required maxlength="80" placeholder="Launch v1.0.0 — официальный релиз" />
+            </label>
+            <label class="field span-2">
+              <span>Подзаголовок (slide-tagline)</span>
+              <input type="text" id="sf-featured-tagline" maxlength="160" placeholder="Большой запуск, приветствуем всех" />
+            </label>
+            <label class="field span-2">
+              <span>Ссылка на картинку (1920×975) * — только URL</span>
+              <input type="url" id="sf-featured-image" required placeholder="https://…/festival.png" />
+            </label>
+            <label class="field">
+              <span>Текст кнопки (CTA)</span>
+              <input type="text" id="sf-featured-cta-label" maxlength="20" placeholder="Смотреть" value="Смотреть" />
+            </label>
+            <label class="field">
+              <span>Ссылка кнопки (CTA URL)</span>
+              <input type="url" id="sf-featured-cta-url" placeholder="https://…" />
+            </label>
+            <label class="field">
+              <span>Порядок (0 — первым)</span>
+              <input type="number" id="sf-featured-sort" min="0" max="999" value="10" />
+            </label>
+            <label class="field">
+              <span>Срок публикации (опционально)</span>
+              <input type="datetime-local" id="sf-featured-expires" />
+            </label>
+            <label class="sp-row switch-row" style="margin-top:8px"><span>Опубликовано (видно в карусели)</span><input type="checkbox" id="sf-featured-published" class="switch" checked /></label>
+            <div class="form-actions" style="margin-top:10px">
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-cancel-featured">Отмена</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btn-save-featured">Сохранить</button>
+            </div>
+            <input type="hidden" id="sf-featured-id" />
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <div class="section-head" style="margin: -10px -12px 12px -12px;"><span class="section-title">🗞️ Новости SAMOT</span>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-add-brand-news" style="margin-left:auto">➕ Новая новость</button>
+          </div>
+          <p class="page-sub" style="margin-top:6px">Новости от лица бренда SAMOT и общие события (фестивали, акции). Доступны всем игрокам в «Последних новостях». При включении «В карусель» новость показывается в карусели «Главной». Только супер-администратор.</p>
+          <div id="brand-news-list" class="brand-news-list"><p class="page-sub">Загружаю…</p></div>
+
+          <div id="brand-news-form" class="hidden" style="margin-top:14px; padding:12px; border:1px solid var(--border); background: var(--card-2);">
+            <div class="sp-title" style="margin-bottom:10px" id="brand-news-form-title">Новая новость SAMOT</div>
+            <label class="field span-2">
+              <span>Заголовок *</span>
+              <input type="text" id="bn-title" required maxlength="120" placeholder="SAMOT v1.0.0 — официальный запуск" />
+            </label>
+            <label class="field">
+              <span>Тип</span>
+              <select id="bn-kind">
+                <option value="samot">SAMOT — от лица бренда</option>
+                <option value="event">Событие — фестиваль / акция</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Публикация (опционально)</span>
+              <input type="datetime-local" id="bn-published" />
+            </label>
+            <label class="field span-2">
+              <span>Краткое описание (для карточки)</span>
+              <input type="text" id="bn-excerpt" maxlength="200" placeholder="Коротко: что случилось" />
+            </label>
+            <label class="field span-2">
+              <span>Полный текст (опционально)</span>
+              <textarea id="bn-body" rows="4" placeholder="Подробности…"></textarea>
+            </label>
+            <label class="field span-2">
+              <span>Картинка (для карусели и карточки)</span>
+              <input type="url" id="bn-image" placeholder="https://…/banner.png" />
+            </label>
+            <label class="field span-2">
+              <span>Ссылка кнопки «Подробнее» (опционально, внешняя)</span>
+              <input type="url" id="bn-cta-url" placeholder="https://… (если пусто — откроется текст новости)" />
+            </label>
+            <label class="sp-row switch-row" style="margin-top:8px"><span>В карусель «Главной»</span><input type="checkbox" id="bn-carousel" class="switch" /></label>
+            <label class="sp-row switch-row"><span>В «Последних новостях» на Главной</span><input type="checkbox" id="bn-home" class="switch" checked /></label>
+            <label class="sp-row switch-row"><span>Опубликовано (видно игрокам)</span><input type="checkbox" id="bn-active" class="switch" checked /></label>
+            <div class="form-actions" style="margin-top:10px">
+              <button type="button" class="btn btn-ghost btn-sm" id="bn-cancel">Отмена</button>
+              <button type="button" class="btn btn-primary btn-sm" id="bn-save">Сохранить</button>
+            </div>
+            <input type="hidden" id="bn-id" />
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-page" id="tab-news">
+        <div class="page-head">
+          <h2>Новости и баннеры</h2>
+          <button class="btn btn-primary btn-sm" id="btn-new-news">+ Новая новость</button>
+        </div>
+        <p class="page-sub">Новости отображаются только в выбранном проекте. Баннеры с картинкой — первыми в карусели лаунчера.</p>
+
+        <div class="news-editor-wrap">
+          <div class="news-editor card" id="news-editor">
+            <h3 id="news-form-title">Новая новость</h3>
+            <form id="news-form">
+              <div class="grid-2">
+                <label class="field span-2">
+                  <span>Заголовок *</span>
+                  <input type="text" id="nf-title" required maxlength="120" placeholder="Чат-патч 0.9.4 «Буря»" />
+                </label>
+
+                <label class="field">
+                  <span>Тег</span>
+                  <!-- Список тегов задаётся одной строкой в admin.js → NEWS_TAGS -->
+                  <select id="nf-tag"></select>
+                </label>
+
+                <label class="field">
+                  <span>Показывать игрокам</span>
+                  <select id="nf-active">
+                    <option value="true">Да (опубликовать)</option>
+                    <option value="false">Нет (спрятать)</option>
+                  </select>
+                </label>
+
+                <div class="field super-only hidden">
+                  <span>Главная страница</span>
+                  <label class="switch-row" style="margin:0; gap:8px; display:flex; align-items:center">
+                    <span style="font-size:.8rem">Показывать в «Последних новостях» на Главной</span>
+                    <input type="checkbox" id="nf-home" class="switch" />
+                  </label>
+                </div>
+
+                <div class="field super-only hidden">
+                  <span>Карусель</span>
+                  <label class="switch-row" style="margin:0; gap:8px; display:flex; align-items:center">
+                    <span style="font-size:.8rem">Показывать в карусели «Главной» (слайд-новость)</span>
+                    <input type="checkbox" id="nf-carousel" class="switch" />
+                  </label>
+                </div>
+                <label class="field super-only hidden">
+                  <span>Карусель: ссылка кнопки «Подробнее» (опционально)</span>
+                  <input type="url" id="nf-cta-url" placeholder="https://… (если пусто — откроется текст новости)" />
+                </label>
+
+                <label class="field span-2">
+                  <span>Краткое описание (на баннере и в списке)</span>
+                  <input type="text" id="nf-excerpt" maxlength="200" placeholder="Коротко: что нового в этом обновлении" />
+                </label>
+
+                <label class="field span-2">
+                  <span>Полный текст</span>
+                  <textarea id="nf-body" rows="6" placeholder="Подробности…"></textarea>
+                
+                  <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-insert-img" title="Вставить картинку по ссылке">🖼 Вставить картинку по ссылке</button>
+                  </div>
+                  <small class="page-sub" style="font-size:.78rem">Можно вставить любую ссылку (.jpg/.png/.webp) — картинка будет внутри текста.</small></label>
+
+                <div class="field span-2">
+                  <span>Баннер (JPG/PNG/WebP, желательно 1600×500) — только ссылка</span>
+                  <input type="url" id="nf-image-url" class="url-fallback" placeholder="https://…/banner.png" />
+                  <small class="page-sub" style="font-size:.78rem">Мы не храним файлы картинок — залейте изображение куда угодно (свой CDN/хостинг) и вставьте ссылку.</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-ghost" id="btn-news-clear">Очистить</button>
+                <button type="submit" class="btn btn-primary" id="btn-news-save">Сохранить</button>
+              </div>
+              <input type="hidden" id="nf-id" />
+            </form>
+          </div>
+
+          <div class="news-list-wrap">
+            <div class="news-list-head">Все новости (✏️ редактирует, 🗑️ удаляет)</div>
+            <div class="admin-news-list" id="admin-news-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB: НАСТРОЙКИ ── -->
+      <section class="tab-page hidden" id="tab-settings">
+        <div class="page-head">
+          <h2>Настройки игры</h2>
+          <button class="btn btn-primary" id="btn-settings-save">Сохранить все настройки</button>
+        </div>
+        <p class="page-sub">Применяются только к выбранному проекту. Игроки увидят их при следующем запуске лаунчера.</p>
+
+        <div class="card settings-card">
+          <div class="grid-2">
+            <label class="field">
+              <span>Название игры</span>
+              <input type="text" id="sf-game-name" placeholder="My Game" />
+            </label>
+            <label class="field">
+              <span>Версия игры</span>
+              <input type="text" id="sf-game-version" placeholder="0.9.4" />
+            </label>
+
+            <label class="field span-2">
+              <span>Ссылка на скачивание (download_url)</span>
+              <input type="url" id="sf-download-url" placeholder="https://github.com/&lt;you&gt;/releases/download/v0.9.4/GameSetup.exe" />
+              <small>Вставьте прямую ссылку на установщик (GitHub Releases, собственный CDN и т.п.). Мы не храним файлы игры или ПО — заливайте на свой хост.</small>
+            </label>
+
+            <label class="field span-2">
+              <span>Картинка игры (URL)</span>
+              <input type="url" id="sf-game-image-url" placeholder="https://…/game-header.png" />
+              <small>Опционально. Показывается в правой карточке игры. Рекомендуемый размер <b>480×270</b> (16:9).</small>
+            </label>
+            <label class="field span-2">
+              <span>Заметки к обновлению</span>
+              <textarea id="sf-update-notes" rows="4" placeholder="— Новый рейд&#10;— Исправлен краш…"></textarea>
+            </label>
+
+            
+            
+
+            <label class="field">
+              <span>Скрыть кнопку «Скачать» (тех. работы)</span>
+              <select id="sf-maintenance">
+                <option value="false">Нет — кнопка доступна</option>
+                <option value="true">Да — игроки не смогут скачать</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Показывать кнопку «Скачать» игрокам</span>
+              <select id="sf-download-available">
+                <option value="true">Да, вместе с версией</option>
+                <option value="false">Нет — версия и кнопка скрыты</option>
+              </select>
+            </label>
+            <label class="field span-2"></label>
+
+            <div class="field span-2" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+              <div class="sp-title" style="margin-bottom:4px; font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-faint)">Картинки + Главная</div>
+              <p class="page-sub" style="margin:4px 0 12px; font-size:.78rem">Все поля — URL на изображение. Рекомендуется заранее залить в Storage (bucket <code>news</code>) или хостить на CDN. Размеры минимальные, если изображение больше — будет обрезаться в CSS.</p>
+            </div>
+
+            <label class="field span-2">
+              <span>Banner на Главной (1920×975)</span>
+              <input type="url" id="media-banner" placeholder="https://…/banner.png" />
+              <small>Широкая обложка для карусели Главной. Если пусто, карусель не покажет проект.</small>
+            </label>
+            <label class="field span-2">
+              <span>Миниатюра (360×240)</span>
+              <input type="url" id="media-thumbnail" placeholder="https://…/thumb.png" />
+              <small>Появляется в сайдбаре вместо лого. Если пусто, используется лого проекта.</small>
+            </label>
+            <label class="field span-2">
+              <span>Card-обложка (480×480, 1:1)</span>
+              <input type="url" id="media-card" placeholder="https://…/cover.png" />
+              <small>Правая колонка на главном экране. Рекомендуется 1:1, например 480×480.</small>
+            </label>
+            <label class="field span-2">
+              <span>News-cover (1600×500)</span>
+              <input type="url" id="media-news" placeholder="https://…/news-cover.png" />
+              <small>Обложка для новостей (Steam-стиль). Показывается в превью новости.</small>
+            </label>
+            <label class="field span-2">
+              <span>Скриншоты ( по одному URL на строку, 960×540)</span>
+              <textarea id="media-screenshots" rows="5" placeholder="https://…/1.png&#10;https://…/2.png"></textarea>
+              <small>Два-четыре скриншота. Дополняет и меняет галерею в карточке игры. Первый будет обложкой по умолчанию.</small>
+            </label>
+
+            <div class="field span-2" style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px">
+              <div class="sp-title" style="margin-bottom:4px; font-size:.72rem; text-transform:uppercase; letter-spacing:.16em; color:var(--text-faint)">Карточка игры</div>
+              <p class="page-sub" style="margin:4px 0 12px; font-size:.78rem">Что игроки увидят справа в карточке: описание, дату выхода, языки, контакт разработчика и полное описание (раскрывается по кнопке). Поддерживает картинки <code>![подпись](url)</code>, как в новостях.</p>
+            </div>
+
+            <label class="field">
+              <span>Дата выхода</span>
+              <input type="text" id="media-release" placeholder="2026-12-31 или «Скоро»" />
+              <small>Первый выпуск (или ожидаемая дата).</small>
+            </label>
+            <label class="field">
+              <span>Языки интерфейса</span>
+              <input type="text" id="media-langs" placeholder="RU, EN" />
+              <small>Через запятую.</small>
+            </label>
+
+            <label class="field span-2">
+              <span>Разработчик</span>
+              <input type="text" id="media-developer" placeholder="Имя / ник разработчика" />
+            </label>
+            <label class="field span-2">
+              <span>Контакты разработчика (клик по разработчику в лаунчере)</span>
+              <textarea id="media-developer-contact" rows="3" placeholder="Discord: nick&#10;Почта: mail@example.com&#10;Сайт: https://…"></textarea>
+              <small>Многострочный текст. Игрокам покажем при клике на имя разработчика.</small>
+            </label>
+            <label class="field span-2">
+              <span>Большое описание (кнопка «Описание ▸» в карточке)</span>
+              <textarea id="media-long-description" rows="6" placeholder="Подробное описание игры, особенности, история…"></textarea>
+              <small>Переносы строк сохраняются. Можно вставлять картинки: ![текст](https://…/img.png).</small>
+            </label>
+
+            <label class="field">
+              <span>Мин. версия лаунчера</span>
+              <input type="text" id="sf-min-launcher" placeholder="1.0.0" />
+            </label>
+          </div>
+        </div>
+
+
+        <div class="card" style="margin-top:18px; padding:16px 18px; border-color: rgba(255,92,122,.35)">
+          <div class="sp-title" style="color:#ffadc0">Visibility</div>
+          <p class="page-sub" style="margin:6px 0 12px">New project hidden for players until you publish. Only owner/super-admin can do this.</p>
+
+          <div class="grid-2" style="gap:12px">
+            <label class="field">
+              <span>Опубликовать проект (approved)</span>
+              <select id="danger-approve">
+                <option value="false">No (hidden)</option>
+                <option value="true">Yes (published)</option>
+              </select>
+            </label>
+            <div class="field">
+              <span>&nbsp;</span>
+              <button type="button" class="btn btn-primary" id="btn-toggle-approve">Apply publish</button>
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap:12px; margin-top:12px">
+            <label class="field">
+              <span>Hide project (is_hidden)</span>
+              <select id="danger-hide">
+                <option value="false">No (visible)</option>
+                <option value="true">Yes (hidden)</option>
+              </select>
+            </label>
+            <div class="field">
+              <span>&nbsp;</span>
+              <button type="button" class="btn btn-ghost" id="btn-toggle-hide">Apply hide</button>
+            </div>
+          </div>
+
+          <div class="form-actions" style="margin-top:14px; border-top:1px solid var(--border); padding-top:14px">
+            <button type="button" class="btn btn-danger" id="btn-delete-project">Delete project forever</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB: КОМАНДА ── -->
+      <section class="tab-page hidden" id="tab-members">
+        <div class="page-head"><h2>Доступ к проекту</h2></div>
+        <p class="members-note">Только владелец проекта («owner») может приглашать и удалять участников. Участник видит и может редактировать только этот проект. Поддерживаются роли <b>owner</b> и <b>editor</b>.</p>
+
+        <div class="members-list" id="members-list"></div>
+        <p class="page-sub" id="members-empty" style="display:none">Команды для этого проекта пока нет.</p>
+
+        <form class="add-member-row" id="add-member-form">
+          <input type="email" id="am-email" placeholder="email коллеги…" required />
+          <select id="am-role" style="min-width:110px">
+            <option value="editor">editor</option>
+            <option value="owner">owner</option>
+          </select>
+          <button type="submit" class="btn btn-primary" id="btn-am-add">Пригласить</button>
+        </form>
+        <p class="form-error" id="am-error" style="max-width:560px"></p>
+      </section>
+
+      <!-- ── TAB: ПУСТО ── -->
+      <section class="tab-page hidden" id="panel-empty-state">
+        <div class="page-head"><h2>Проектов пока нет</h2></div>
+        <p class="page-sub">У вашей учётной записи ещё не привязано ни одного проекта.<br />Создайте первый прямо сейчас — или нажмите «Выйти», чтобы зайти позже с другой учётной записи.</p>
+        <div style="display:grid; gap:10px; max-width:320px;">
+          <button class="btn btn-primary super-only hidden" id="empty-create-btn">➕ Создать проект</button>
+          <button class="btn btn-ghost" id="empty-logout-btn">Выйти</button>
+        </div>
+      </section>
+
+<!-- TAB: БАНЫ -->
+      <section class="tab-page hidden" id="tab-bans">
+        <div class="page-head"><h2>⚠️ Предупреждения</h2></div>
+        <p class="page-sub">Мягкая ступень перед баном. Игрок видит полоску наверху лаунчера с причиной и сроком. Не ограничивает доступы, действует ответственно.</p>
+        <form class="add-member-row" id="warn-form">
+          <input type="email" id="warn-email" placeholder="email пользователя" list="users-datalist" autocomplete="off" required />
+          <input type="text" id="warn-reason" placeholder="Причина (напр. нарушение правил в чате)" maxlength="200" style="min-width:240px" required />
+          <select id="warn-days" style="min-width:130px">
+            <option value="1">1 день</option>
+            <option value="3" selected>3 дня</option>
+            <option value="7">7 дней</option>
+            <option value="14">14 дней</option>
+            <option value="30">30 дней</option>
+          </select>
+          <button type="submit" class="btn btn-warn" id="btn-warn" style="background:rgba(255,201,77,.18); border:1px solid var(--warn); color:#ffd985">Предупредить</button>
+        </form>
+        <p class="form-error" id="warn-error" style="max-width:560px"></p>
+        <div class="members-list" id="warnings-list" style="margin-top:10px"></div>
+
+        <div class="page-head" style="margin-top:18px"><h2>⛔ Бан-история</h2></div>
+        <p class="page-sub">Все выданные баны. Активные видны с красным тегом, истёкшие — серым. Предупреждение — мягкий способ предупредить до бана.</p>
+
+        <form class="add-member-row" id="ban-form">
+          <input type="email" id="ban-email" placeholder="email пользователя" list="users-datalist" autocomplete="off" required />
+          <input type="text" id="ban-reason" placeholder="Причина (напр. чит)" maxlength="200" style="min-width:200px" />
+          <select id="ban-minutes" style="min-width:150px">
+            <option value="1440">1 день</option>
+            <option value="10080">7 дней</option>
+            <option value="43200">30 дней</option>
+            <option value="525600">1 год</option>
+          </select>
+          <button type="submit" class="btn btn-danger" id="btn-ban">Забанить</button>
+        </form>
+        <p class="form-error" id="ban-error" style="max-width:560px"></p>
+
+        <div style="display:flex; gap:12px; align-items:center; margin-top:14px; flex-wrap:wrap">
+          <input type="text" id="ban-search" placeholder="Поиск по email / UID / причине…" style="flex:1; min-width:240px" />
+          <div class="segmented" id="ban-filter-toggle" role="tablist" style="display:flex; gap:4px; background:rgba(255,255,255,.05); padding:4px; border-radius:10px;">
+            <button type="button" class="seg-btn active" data-filter="all">Все</button>
+            <button type="button" class="seg-btn" data-filter="active">Активные</button>
+            <button type="button" class="seg-btn" data-filter="expired">Истёкшие</button>
+          </div>
+        </div>
+
+        <div class="members-list" id="bans-list" style="margin-top:12px"></div>
+        <p class="page-sub" id="bans-empty" style="display:none">Баны не найдены.</p>
+      </section>
+
+
+      <!-- TAB: ОБНОВЛЕНИЯ -->
+      <section class="tab-page hidden" id="tab-updates">
+        <div class="page-head"><h2>Обновления</h2></div>
+        <p class="page-sub">Здесь вы указываете последнюю версию и ссылку на установщик каждого инструмента. В лаунчере и в админке будет показан баннер «Доступно обновление».</p>
+
+        <div class="card settings-card">
+          <div class="sp-title" style="margin-bottom:10px">Клиент (лаунчер)</div>
+          <label class="field">
+            <span>Последняя версия лаунчера (semver, например 1.2.0)</span>
+            <input type="text" id="upd-launcher-version" placeholder="1.0.0" />
+          </label>
+          <label class="field">
+            <span>Ссылка на установщик (.exe)</span>
+            <input type="url" id="upd-launcher-url" placeholder="https://github.com/&lt;you&gt;/releases/download/v1.2.0/GameLauncherSetup.exe" />
+          </label>
+          <label class="field">
+            <span>SHA-256 установщика клиента (опционально, 64 hex)</span>
+            <input type="text" id="upd-launcher-sha256" placeholder="например: 3b1f…d7a9" maxlength="64" />
+          </label>
+
+          <div class="sp-title" style="margin:22px 0 10px">Админка (этот кабинет)</div>
+          <label class="field">
+            <span>Последняя версия админки (semver, например 1.2.0)</span>
+            <input type="text" id="upd-admin-version" placeholder="1.0.0" />
+          </label>
+          <label class="field">
+            <span>Ссылка на установщик (.exe)</span>
+            <input type="url" id="upd-admin-url" placeholder="https://github.com/&lt;you&gt;/releases/download/v1.2.0/AdminPanel.exe" />
+          </label>
+          <label class="field">
+            <span>SHA-256 установщика админки (опционально, 64 hex)</span>
+            <input type="text" id="upd-admin-sha256" placeholder="например: 8f3a…c412" maxlength="64" />
+          </label>
+
+          <div class="form-actions" style="margin-top:14px">
+            <button type="button" class="btn btn-primary" id="btn-updates-save">Сохранить версии</button>
+            <button type="button" class="btn btn-ghost" id="btn-updates-check">Проверить сейчас</button>
+          </div>
+        </div>
+
+        <div class="card settings-card" style="margin-top:14px">
+          <div class="sp-title">Как подключить автообновление</div>
+          <div style="font-size:.84rem; line-height:1.55; color:#bfc4d8">
+            1. Собери новый exe (npm run dist / dist:admin)<br>
+            2. Загрузи файлы на GitHub Releases (на сайт-репозиторий или отдельный релиз-репозиторий)<br>
+            3. В обеих строках выше вставь прямые ссылки (Assets → Copy URL)<br>
+            4. Каждый раз меняй «Последняя версия» и «Ссылка» на свежие значения. Игроки и админка увидят баннер и обновятся по одному клику.
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: БАГ-РЕПОРТ -->
+      <section class="tab-page hidden" id="tab-bugreport">
+        <div class="page-head"><h2>Баг-репорт</h2></div>
+        <p class="page-sub">Баг-репорты отправляются на <code>разработчику</code> скрыто для пользователей. Письмо содержит ваше сообщение, технические данные игры и логи.</p>
+        <div class="card settings-card">
+          <label class="field">
+            <span>Ваше сообщение (что не работает, как воспроизвёлся баг)</span>
+            <textarea id="bug-message" rows="5" placeholder="Опишите баг…" required></textarea>
+          </label>
+          <label class="field">
+            <span>Контакт для обратной связи (email или Discord)</span>
+            <input type="text" id="bug-contact" placeholder="you@example.com / @username" />
+          </label>
+          <label class="field">
+            <span>Скриншот (необязательно)</span>
+            <input type="file" id="bug-image" accept="image/*" />
+          </label>
+          <button type="button" class="btn btn-primary" id="btn-bug-send">Отправить сейчас</button>
+        </div>
+      </section>
+
+
+      <!-- TAB: УСТРОЙСТВА -->
+      <section class="tab-page hidden" id="tab-devices">
+        <div class="page-head"><h2>🔍 Игроки</h2></div>
+        <p class="page-sub">Поиск по email или UUID. Только супер-администратор.</p>
+
+        <div class="card settings-card" style="margin-bottom:14px">
+          <div class="sp-title" style="margin-bottom:8px">Все пользователи</div>
+          <input type="text" id="users-search" placeholder="Поиск по email или нику…" style="width:100%; margin-bottom:8px" />
+          <div id="users-list" class="users-list"><p class="page-sub">Загружаю…</p></div>
+          <p class="page-sub" id="users-empty" style="display:none">Ничего не найдено.</p>
+        </div>
+
+        <div class="card settings-card">
+          <form id="dev-find-form" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" id="dev-find-email" placeholder="email или UUID пользователя" list="users-datalist" autocomplete="off" required style="flex:1; min-width:260px" />
+            <button type="submit" class="btn btn-primary" id="dev-find-btn">Найти</button>
+          </form>
+          <div id="dev-find-error" class="form-error" style="margin-top:6px"></div>
+        </div>
+
+        <div id="dev-summary" class="hidden" style="display:grid; gap:10px; margin-top:12px">
+          <div class="card settings-card">
+            <div class="sp-title" style="margin-bottom:8px">Сводка</div>
+            <div id="dev-meta" style="font-size:.86rem; line-height:1.7"></div>
+            <div id="dev-banned-row" style="margin-top:6px"></div>
+            <div class="form-actions" style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px; gap:10px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-danger" id="btn-ban-player">🎱 Забанить…</button>
+              <button type="button" class="btn btn-ghost" id="btn-unban-player">✅ Снять бан</button>
+              <button type="button" class="btn btn-ghost" id="btn-signout-all-admin">🚪 Выкинуть все сессии (service-role)</button>
+              <button type="button" class="btn btn-ghost" id="btn-clear-devices-admin">🧹 Очистить устройства</button>
+              <button type="button" class="btn btn-ghost" id="btn-cleanup-old-data" title="Удалить устройства старше 90 дней и админ-лог старше 180 дней">🧹 Очистить архив</button>
+              <button type="button" class="btn btn-danger" id="btn-delete-user-admin">🗑 Удалить аккаунт по запросу</button>
+            </div>
+          </div>
+
+          <div class="card settings-card">
+            <div class="sp-title" style="margin-bottom:8px">Проекты</div>
+            <div id="dev-projects-list" style="display:grid; gap:6px; font-size:.84rem"></div>
+          </div>
+
+          <div class="card settings-card">
+            <div class="sp-title" style="margin-bottom:8px">Устройства</div>
+            <div id="dev-devices-list" style="display:grid; gap:8px;"></div>
+            <p class="page-sub" id="dev-empty" style="display:none; margin-top:6px">Устройств нет.</p>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ══════════ РАЗРАБОТЧИКИ (super-only) ══════════ -->
+      <section class="tab-page hidden" id="tab-admins">
+        <div class="page-head"><h2>🛠 Разработчики и проекты</h2>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-grant-admin">➕ Выдать доступ по email</button>
+        </div>
+        <p class="page-sub">Все ваши проекты. Клик по карточке — раскрыть состав команды; 🗑 — удалить проект навсегда (необратимо). Видно только супер-администратору.</p>
+        <div id="projects-cards" class="projects-cards"><p class="page-sub">Загружаю проекты…</p></div>
+        <details class="wiki-item" style="margin-top:14px">
+          <summary>🛠 Супер-администраторы</summary>
+          <div class="wiki-body">
+            <div id="admins-list" class="admins-list" style="margin-top:8px"></div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ══════════ АДМИН-ЛОГ (super-only) ══════════ -->
+      <section class="tab-page hidden" id="tab-audit">
+        <div class="page-head"><h2>📜 Админ-лог</h2></div>
+        <p class="page-sub">Все действия администраторов и супер-админов: кто, когда и что сделал. Видно только супер-администратору.</p>
+        <div class="card">
+          <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap">
+            <input type="text" id="audit-search" placeholder="Фильтр по действию / email / проекту…" style="flex:1; min-width:240px" />
+            <button type="button" class="btn btn-ghost btn-sm" id="audit-refresh">🔄 Обновить</button>
+          </div>
+          <div id="audit-list" class="audit-list"><p class="page-sub">Загружаю…</p></div>
+          <p class="page-sub" id="audit-empty" style="display:none">Ничего не найдено.</p>
+        </div>
+      </section>
+
+      <!-- TAB: ИГРА -->
+      <section class="tab-page hidden" id="tab-game">
+        <div class="page-head"><h2>📦 Игра</h2></div>
+        <p class="page-sub">Игра распространяется через GitHub Releases: файлы игры или ПО прикреплены к релизу, а какие скачать решает манифест. Лаунчер скачает только изменённые файлы.</p>
+
+        <div class="card settings-card">
+          <div class="sp-title" style="margin-bottom:10px">GitHub Releases</div>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>Owner (org или пользователь)</span>
+              <input type="text" id="sf-game-owner" placeholder="ваш GitHub-аккаунт" value="" />
+            </label>
+            <label class="field">
+              <span>Repo (релизный репозиторий)</span>
+              <input type="text" id="sf-game-repo" placeholder="имя-репозитория" value="" />
+            </label>
+            <label class="field">
+              <span>Тег релиза</span>
+              <input type="text" id="sf-game-tag" placeholder="v1.2.0" />
+            </label>
+            <label class="field">
+              <span>Включить манифестную загрузку</span>
+              <select id="sf-game-enabled">
+                <option value="true">Да (дельта-обновления, быстрее для игроков)</option>
+                <option value="false">Нет (кнопка «Скачать» отдаёт классический exe)</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="field span-2">
+            <span>Поле manifest.json (вставьте содержимое из сборки)</span>
+            <textarea id="sf-game-manifest" rows="10" placeholder='{"files":[{"path":"game.exe","sha256":"…","size":12345678,"assetName":"game.exe"}]}' style="font-family:monospace;font-size:.78rem"></textarea>
+            <small>Свой GitHub-аккаунт и своё имя репозитория — вставьте Owner → Repo → Тег → они составят URL автоматически внутри клиента. Разработчик сам управляет своим релизом.</small>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-primary" id="btn-game-save">Сохранить параметры</button>
+            <button type="button" class="btn btn-ghost" id="btn-game-validate">🔍 Проверить релиз на GitHub</button>
+          </div>
+          <div id="game-status" style="margin-top:14px; font-size:.85rem; color:#bfc4d8"></div>
+
+          <details style="margin-top:14px"><summary style="cursor:pointer; color:var(--accent); font-size:.82rem">❓ Как выкатить новый релиз</summary>
+            <ol style="margin:8px 0 0 18px; font-size:.82rem; color:#adb2c7; line-height:1.6">
+              <li>Соберите папку с готовой игрой (например, <code>build/</code> после вашего сборщика).</li>
+              <li>Запустите <b>SAMOT Packager</b> (кнопка скачивания чуть ниже в этом разделе): выберите папку игры, укажите версию и тег, нажмите «Собрать релиз». Появится папка <code>game-dist/</code> с <code>pack-*.zip</code>, <code>manifest.json</code> и <code>RELEASE-INSTRUCTIONS.txt</code>.</li>
+              <li>На GitHub → Releases → «Draft a new release» → задайте тег (например, <code>v1.2.0</code>) и описание.</li>
+              <li>Залейте туда <b>всё содержимое</b> <code>game-dist/</code> (manifest.json + все ассеты).</li>
+              <li>Вернитесь сюда, введите этот же тег в поле «Тег релиза», нажмите «Проверить релиз на GitHub» — лаунчер увидит файлы.</li>
+              <li>После успешной проверки нажмите «Сохранить». Кнопка «Скачать» в лаунчере будет качать игру по манифесту.</li>
+            </ol>
+          </details>
+        </div>
+      </section>
+
+
+
+<!-- ── TAB: ПРЕВЬЮ ── -->
+      
+      <!-- TAB: АНАЛИТИКА -->
+      <section class="tab-page hidden" id="tab-analytics">
+        <div class="page-head"><h2>📊 Аналитика</h2>
+          <div style="display:flex; gap:8px; align-items:center">
+            <select id="ana-period">
+              <option value="7">7 дней</option>
+              <option value="30" selected>30 дней</option>
+              <option value="90">90 дней</option>
+              <option value="365">1 год</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" id="btn-ana-csv">⬇️ Скачать CSV</button>
+          </div>
+        </div>
+        <p class="page-sub">Сводка активности платформы за выбранный период. Кнопка «Скачать CSV» выгружает текущий отчёт.</p>
+
+        <div class="ana-grid">
+          <div class="ana-card"><div class="ana-num" id="ana-total-users">…</div><div class="ana-label">Всего пользователей</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-total-devices">…</div><div class="ana-label">Устройств всего</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-active">…</div><div class="ana-label">Актив. устройств / период</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-launches">…</div><div class="ana-label">Запусков / период</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-new">…</div><div class="ana-label">Новых пользователей / период</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-news-period">…</div><div class="ana-label">Новостей опубликовано / период</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-bans-total">…</div><div class="ana-label">Банов всего</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-bans-active">…</div><div class="ana-label">Банов активных</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-new-bans">…</div><div class="ana-label">Новых банов / период</div></div>
+          <div class="ana-card"><div class="ana-num" id="ana-projects">…</div><div class="ana-label">Проектов опубликовано</div></div>
+        </div>
+
+        <div class="ana-chart-card">
+          <div class="sp-title" style="margin-bottom:10px">Активные устройства — последние 14 дней</div>
+          <div id="ana-bars" class="ana-bars"></div>
+          <div id="ana-bars-labels" class="ana-bars-labels"></div>
+        </div>
+      </section>
+
+      <!-- ══════════ РАЗРАБОТЧИКУ (материалы) ══════════ -->
+      <section class="tab-page hidden" id="tab-dev">
+        <div class="page-head"><h2>📎 Материалы для разработчиков</h2></div>
+        <p class="page-sub">Всё, что нужно, чтобы подготовить игру к публикации: шаблоны изображений, скрипт сборки манифеста и короткая инструкция. Не видно игрокам.</p>
+
+        <div class="card">
+          <h3>Шаблоны изображений</h3>
+          <p class="page-sub" style="margin:4px 0 10px">Скачайте, впишите в рамки свой арт — и вставьте ссылку в настройках проекта. Мы не храним файлы картинок: заливайте куда угодно со стабильным URL (свой CDN, GitHub, свой сервер).</p>
+          <div class="dev-templates" id="dev-templates"></div>
+        </div>
+
+                <div class="card" style="margin-top:14px">
+          <h3>SAMOT Packager — сборка игры для релиза (.exe)</h3>
+          <p class="page-sub" style="margin:4px 0 10px">Отдельная программа для Windows: выбирает папку игры, пакует файлы в <code>pack-*.zip</code>, считает SHA-256 и формирует <code>manifest.json</code> + короткую инструкцию по публикации. Установка не требуется (portable), 72&nbsp;МБ, подписана сертификатом SAMOT.</p>
+          <button type="button" class="btn btn-primary" id="btn-download-packager">⬇️ Скачать SAMOT Packager 1.0.0</button>
+          <p class="page-sub" style="margin:10px 0 0">Запускается двойным кликом: папка игры → версия → «Собрать релиз» → готовая папка <code>game-dist</code>. Исходники и подробности — в релизе <code>tools-v1.0.0</code> репозитория SAMOT-releases.</p>
+        </div>
+
+<div class="card" style="margin-top:14px">
+          <h3>Как выпустить игру</h3>
+          <ol class="dev-steps">
+            <li>Соберите игру в отдельную папку (например, <code>C:/Games/MyGame/build</code>). Внутри должны лежать только финальные файлы.</li>
+            <li>Запустите <b>SAMOT Packager</b>: папка игры → версия (<code>1.0.0</code>) и тег (<code>v1.0.0</code>) → «Собрать релиз». Рядом появится папка <code>game-dist/</code> с <code>manifest.json</code> и <code>pack-*.zip</code> для релиза.</li>
+            <li>Создайте релиз на GitHub в своём репозитории (например, <code>owner/repo</code>, тег <code>v0.9.4</code>) и загрузите в него содержимое <code>game-dist/</code> как ассеты.</li>
+            <li>В админке → «📦 Релиз и манифест» заполните: владелец репозитория, имя репозитория, тег релиза, версию игры, «Манифест» — вставьте JSON-файл целиком. Включите «Игра доступна для загрузки» и сохраните.</li>
+            <li>Проверьте в лаунчере под тестовым аккаунтом: «Скачать игру» скачает только недостающие/сбитые файлы (проверка хэшей по манифесту).</li>
+            <li>Обновление игры: та же сборка с новым тегом. Игроки получат только изменённые файлы.</li>
+          </ol>
+          <p class="page-sub" style="margin-top:10px">Если игра ещё не готова — оставьте «Игра доступна для загрузки: Нет». Игроки увидят карточку, но кнопка скачивания будет скрыта.</p>
+        </div>
+      </section>
+
+      <!-- ══════════ ВИКИ ДЛЯ РАЗРАБОТЧИКОВ ══════════ -->
+      <section class="tab-page hidden" id="tab-wiki">
+        <div class="page-head"><h2>📚 Вики разработчика</h2></div>
+        <p class="page-sub">Краткая справка для всех разработчиков, у которых есть доступ к этой админке. Игра здесь не требуется — всё описано на уровне поиска и не дублирует код.</p>
+
+        <details class="wiki-item" open>
+          <summary>Кто вы в этой системе</summary>
+          <div class="wiki-body">
+            <p>Вы — <b>разработчик</b>. В обычной роли (editor) вы можете:</p>
+            <ul>
+              <li>менять новости, настройки, скриншоты своего проекта;</li>
+              <li>загружать и обновлять файлы игры или ПО через GitHub Releases;</li>
+              <li>видеть статистику по своему проекту;</li>
+              <li>связываться с командой и просить разбан;</li>
+              <li>видеть предупреждения своего проекта (если вы владелец (owner)).</li>
+            </ul>
+            <p>Что вы <b>не</b> можете в обычной роли (для этого нужен владелец проекта или супер-администратор SAMOT):</p>
+            <ul>
+              <li>видеть и менять чужие проекты;</li>
+              <li>создавать новый проект (обратитесь к супер-админу);</li>
+              <li>выдавать доступ к админке другим людям;</li>
+              <li>удалять чужие проекты;</li>
+              <li>банить игроков (только супер-администратор);</li>
+              <li>отправлять предупреждения игрокам (только владелец и супер-администратор);</li>
+              <li>определять публичную главную карусель лаунчера и «Последние новости» на Главной.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="wiki-item">
+          <summary>Разделы админки, кратко</summary>
+          <div class="wiki-body">
+            <p><b>📰 Новости проекта</b> — публикации для игроков: заголовок, тег, картинка, текст. Флаг «Показывать в «Последних новостях» на Главной» — только для супер-администратора. «📺 В карусель» тоже только для super-админа.</p>
+            <p><b>⚙️ Настройки проекта</b> — название, версия, заметки к обновлению, переключатели видимости кнопки скачивания, ссылка на установщик, медиа-поля (баннер, обложка, скриншоты, описание). Сохраняет всё разом.</p>
+            <p><b>📦 Релиз и манифест</b> — связь с GitHub Releases и манифестом SHA-256 для дельта-обновления. Гайд ниже в «Релизах».</p>
+            <p><b>👥 Команда проекта</b> — кто входит в команду. Вы (owner) можете приглашать участников по email — роль editor/owner.</p>
+            <p><b>⛔ Баны и разбаны</b> — баны с причиной и сроком, только супер-администратор. ⚠️ Предупреждения — мягкая ступень до бана: выдавать и отзывать могут владелец проекта и супер-администратор.</p>
+            <p><b>🐞 Баг-репорты</b> — сообщения игроков и разработчиков. Если собрали баг — выгрузите, чтобы знать, что чинить.</p>
+            <p><b>📎 Разработчику</b> — шаблоны изображений, скрипт сборки манифеста, пошаговая инструкция выпуска релиза.</p>
+            <p><b>📊 Аналитика</b> — сводка по запускам и активности игроков (только супер-администратор).</p>
+            <p><b>🗞️ Новости SAMOT</b> — новости от лица бренда и события (фестивали/акции), только супер-администратор.</p>
+          </div>
+        </details>
+
+        <details class="wiki-item">
+          <summary>Как залить новую игру (первый раз)</summary>
+          <div class="wiki-body">
+            <ol>
+              <li>Соберите игру в папку (например, <code>C:/Games/MyGame/build</code>).</li>
+              <li>Запустите <b>SAMOT Packager</b> — получите <code>game-dist/</code> с <code>manifest.json</code> и <code>pack-*.zip</code> для релиза.</li>
+              <li>Создайте релиз на GitHub в своём репозитории (тег <code>v0.9.4</code>) и загрузите файлы из <code>game-dist/</code> как ассеты.</li>
+              <li>В этой админке → «📦 Релиз и манифест» заполните: владелец, репозиторий, тег, версию, вставьте <code>manifest.json</code> целиком.</li>
+              <li>Сохраните. Включите «Игра доступна для загрузки».</li>
+              <li>Проверьте в лаунчере под тестовым аккаунтом: кнопка «Скачать» будет качать только отсутствующие/сбитые файлы.</li>
+            </ol>
+            <p><b>Если игра в разработке:</b> оставьте «Игра доступна для загрузки» в положении «Нет». Игроки увидят карточку, но скачивать ничего не будут.</p>
+          </div>
+        </details>
+
+        <details class="wiki-item">
+          <summary>Как выпустить обновление</summary>
+          <div class="wiki-body">
+            <ol>
+              <li>Соберите новую версию игры тем же SAMOT Packager: укажите версию <code>0.9.5</code>, тег <code>v0.9.5</code>.</li>
+              <li>Создайте новый тег релиза на GitHub (например, <code>v0.9.5</code>) и загрузите в него ассеты.</li>
+              <li>В этой админке → «📦 Релиз и манифест» поменяйте: тег релиза → <code>v0.9.5</code>, версию игры → <code>0.9.5</code>, вставьте свежий <code>manifest.json</code>.</li>
+              <li>Кнопка «Сохранить все настройки».</li>
+            </ol>
+            <p>Игроки при следующем запуске увидят, что доступно обновление, и получат только изменённые файлы.</p>
+          </div>
+        </details>
+
+        <details class="wiki-item">
+          <summary>Важные правила</summary>
+          <div class="wiki-body">
+            <ul>
+              <li><b>Пароли не пересылайте даже коллегам.</b> Ваша сессия — ваш ключ. Распространение пароля — мгновенная блокировка.</li>
+              <li><b>Картинки — только по ссылкам.</b> Мы не храним файлы обложек и скриншотов. Заливайте куда угодно (свой CDN, облако, GitHub raw) — ставьте URL в настройках проекта.</li>
+              <li><b>Не удаляйте проект без согласования.</b> Удаление каскадно сносит всё (новости, настройки, участники).</li>
+              <li><b>Бан — это крайняя мера.</b> Сначала предупреждение в чате/сообщении, затем временный бан, затем бессрочный. Всегда указывайте причину и срок.</li>
+              <li><b>Безопасность важнее скорости.</b> Если заметили уязвимость — сообщите супер-админу через «Баг-репорты» до того, как этим кто-то успел воспользоваться.</li>
+              <li><b>ПД персональных данных.</b> То, что игрок сам сообщает в баг-репорту — личное. Не передаём, не пересылаем, не публикуем. Доступ — только коллегам по проекту.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="wiki-item">
+          <summary>Кому писать при вопросах</summary>
+          <div class="wiki-body">
+            <p>Быстрые вопросы — повторите, что в «📎 Разработчику» (гайд и шаблоны).</p>
+            <p>Не получилось — «🐞 Баг-репорты» → «Отправить сейчас». Ответ придёт асинхронно, почта у нас скрыта — просто пишите, о чём вопрос.</p>
+            <p>Срочно нужно добавить команду / создать проект / выдать доступ — пишете супер-администратору вашего проекта, он решает.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="tab-page hidden" id="tab-docs">
+        <div class="page-head"><h2>📄 Документы</h2></div>
+        <p class="page-sub">Служебные документы для администраторов и разработчиков. Разверните раздел, чтобы прочитать.</p>
+        <div class="consent-accs" style="max-width:820px">
+          <details class="consent-acc" open>
+            <summary class="consent-acc-summary">Пользовательское соглашение (разработчика)</summary>
+            <div class="consent-body" id="adm-doc-agreement"></div>
+          </details>
+          <details class="consent-acc">
+            <summary class="consent-acc-summary">Персональные данные</summary>
+            <div class="consent-body" id="adm-doc-privacy"></div>
+          </details>
+          <details class="consent-acc">
+            <summary class="consent-acc-summary">Правила сервиса (разработчика)</summary>
+            <div class="consent-body" id="adm-doc-rules"></div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="project-modal-wrap" hidden>
+    <div class="modal-box" style="width:min(520px, 92vw); background:#1d1d23; border:1px solid #2a2a32; border-radius:16px; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.5);">
+      <h2 style="margin:0 0 6px; font-size:1.15rem;">Новый проект</h2>
+      <p class="page-sub">Создастся в вашем аккаунте, вы станете owner'ом.</p>
+      <form id="new-project-form" style="display:grid; gap:12px; margin-top:12px;">
+        <label class="field">
+          <span>Название *</span>
+          <input type="text" id="np-name" required maxlength="60" placeholder="My Awesome Game" />
+        </label>
+        <label class="field">
+          <span>Слаг (латиница, для внутреннего использования)</span>
+          <input type="text" id="np-slug" required maxlength="40" pattern="[a-z0-9-]+" placeholder="my-awesome-game" />
+        </label>
+        <label class="field">
+          <span>Тэглайн (одна строка)</span>
+          <input type="text" id="np-tagline" maxlength="80" placeholder="Лучшая игра о котиках" />
+        </label>
+        <label class="field">
+          <span>Иконка (эмодзи или URL картинки)</span>
+          <input type="text" id="np-logo" maxlength="300" placeholder="🎮 или https://…/logo.png" />
+        </label>
+        <label class="field">
+          <span>Цвет акцента</span>
+          <input type="color" id="np-color" value="#7c5cff" />
+        </label>
+        <p class="form-error" id="np-error"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btn-np-cancel">Отмена</button>
+          <button type="submit" class="btn btn-primary" id="btn-np-create">Создать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="admin-toast"></div>
+  <div id="context-menu" class="context-menu hidden" role="menu"></div>
+
+  <!-- ══════════ СОГЛАШЕНИЕ И ПЕРСОНАЛЬНЫЕ ДАННЫЕ ══════════ -->
+  <div class="modal-backdrop hidden" id="consent-modal">
+    <div class="modal consent-modal" role="dialog" aria-modal="true" aria-label="Служебные документы">
+      <div class="consent-head">
+        <h2 class="modal-title" style="margin:0">Служебные документы</h2>
+        <p class="page-sub" style="margin:6px 0 0">Разверните каждый раздел и отметьте приём.</p>
+      </div>
+      <div class="consent-accs">
+        <details class="consent-acc" open>
+          <summary class="consent-acc-summary">Пользовательское соглашение</summary>
+          <div class="consent-body" id="consent-agreement"></div>
+          <label class="consent-check"><input type="checkbox" id="consent-agree-rules" /><span>Я принимаю Пользовательское соглашение</span></label>
+        </details>
+        <details class="consent-acc">
+          <summary class="consent-acc-summary">Персональные данные</summary>
+          <div class="consent-body" id="consent-privacy"></div>
+          <label class="consent-check"><input type="checkbox" id="consent-agree-data" /><span>Я даю согласие на обработку моих персональных данных</span></label>
+        </details>
+        <details class="consent-acc">
+          <summary class="consent-acc-summary">Правила сервиса (разработчика)</summary>
+          <div class="consent-body" id="consent-rules"></div>
+          <label class="consent-check"><input type="checkbox" id="consent-agree-service" /><span>Я принимаю Правила сервиса разработчика</span></label>
+        </details>
+      </div>
+      <div class="modal-actions" style="justify-content:space-between; margin-top:12px">
+        <button class="btn btn-ghost" id="consent-decline">Выйти</button>
+        <button class="btn btn-primary" id="consent-accept" disabled>Принять и продолжить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../node_modules/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="admin-flag.js"></script>
+  <script src="../documents.js"></script>
+  <script src="../config.js"></script>
+  <script src="templates.js"></script>
+  <script src="admin.js"></script>
+<datalist id="users-datalist"></datalist>
+</body>
+</html>

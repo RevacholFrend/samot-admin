@@ -1,0 +1,22 @@
+{
+  "appId": "com.samot.packager",
+  "productName": "SAMOT Packager",
+  "extraMetadata": {
+    "main": "tools/packager/packager-main.cjs"
+  },
+  "directories": {
+    "output": "dist-packager"
+  },
+  "files": [
+    "tools/packager/**",
+    "assets/iconAdmin.ico",
+    "assets/iconAdmin.png"
+  ],
+  "win": {
+    "target": "portable",
+    "icon": "assets/iconAdmin.ico"
+  },
+  "portable": {
+    "artifactName": "SAMOT-Packager-${version}.exe"
+  }
+}

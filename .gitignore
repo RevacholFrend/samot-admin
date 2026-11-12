@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-admin/
+dist-packager/
+package-lock.json.tmp
+*.log
+install-state.json
+.DS_Store
