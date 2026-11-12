@@ -337,9 +337,9 @@
             </label>
 
             <label class="field span-2">
-              <span>Ссылка на скачивание (download_url)</span>
+              <span>Ссылка на скачивание (download_url) — не обязательна</span>
               <input type="url" id="sf-download-url" placeholder="https://github.com/&lt;you&gt;/releases/download/v0.9.4/GameSetup.exe" />
-              <small>Вставьте прямую ссылку на установщик (GitHub Releases, собственный CDN и т.п.). Мы не храним файлы игры или ПО — заливайте на свой хост.</small>
+              <small>Для случая, когда разработчик даёт <b>один прямой .exe-установщик</b> вместо сборки через манифест (SAMOT Packager). Если у вас настроены «Игра» → «Release и манифест» с manifest.json — это поле <b>не используется</b>, загрузка пойдёт по манифесту. Иначе игрок скачает этот файл целиком без проверки чексумм.</small>
             </label>
 
             <label class="field span-2">
