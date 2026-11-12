@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -332,8 +332,10 @@
               <input type="text" id="sf-game-name" placeholder="My Game" />
             </label>
             <label class="field">
-              <span>Версия игры</span>
-              <input type="text" id="sf-game-version" placeholder="0.9.4" />
+              <span>Версия игры и тег релиза</span>
+              <input type="text" id="sf-game-tag-settings" placeholder="v1.0.0" readonly
+                     title="Меняется в «Игра» → «Релиз и манифест» — там же и заполняется из manifest.json" />
+              <small>Задаётся в разделе «Игра» → «Релиз и манифест» (автоматически из манифеста).</small>
             </label>
 
             <label class="field span-2">
@@ -394,7 +396,7 @@
             <label class="field span-2">
               <span>News-cover (1600×500)</span>
               <input type="url" id="media-news" placeholder="https://…/news-cover.png" />
-              <small>Обложка для новостей (Steam-стиль). Показывается в превью новости.</small>
+              <small>Обложка для новостей. Показывается в превью новости.</small>
             </label>
             <label class="field span-2">
               <span>Скриншоты ( по одному URL на строку, 960×540)</span>
@@ -431,11 +433,6 @@
               <span>Большое описание (кнопка «Описание ▸» в карточке)</span>
               <textarea id="media-long-description" rows="6" placeholder="Подробное описание игры, особенности, история…"></textarea>
               <small>Переносы строк сохраняются. Можно вставлять картинки: ![текст](https://…/img.png).</small>
-            </label>
-
-            <label class="field">
-              <span>Мин. версия лаунчера</span>
-              <input type="text" id="sf-min-launcher" placeholder="1.0.0" />
             </label>
           </div>
         </div>
@@ -726,8 +723,9 @@
               <input type="text" id="sf-game-repo" placeholder="имя-репозитория" value="" />
             </label>
             <label class="field">
-              <span>Тег релиза</span>
-              <input type="text" id="sf-game-tag" placeholder="v1.2.0" />
+              <span>Версия игры / Тег релиза</span>
+              <input type="text" id="sf-game-tag" placeholder="v1.0.0" />
+              <small>Один и тот же идентификатор: в манифесте — <code>version</code>, тег релиза GitHub — с префиксом <code>v</code>. Заполняется автоматически при вставке manifest.json.</small>
             </label>
             <label class="field">
               <span>Включить манифестную загрузку</span>
@@ -744,22 +742,10 @@
             <small>Свой GitHub-аккаунт и своё имя репозитория — вставьте Owner → Repo → Тег → они составят URL автоматически внутри клиента. Разработчик сам управляет своим релизом.</small>
           </label>
 
-          <div class="form-actions">
+          <div class="form-actions" style="margin-top:14px">
             <button type="button" class="btn btn-primary" id="btn-game-save">Сохранить параметры</button>
-            <button type="button" class="btn btn-ghost" id="btn-game-validate">🔍 Проверить релиз на GitHub</button>
           </div>
           <div id="game-status" style="margin-top:14px; font-size:.85rem; color:#bfc4d8"></div>
-
-          <details style="margin-top:14px"><summary style="cursor:pointer; color:var(--accent); font-size:.82rem">❓ Как выкатить новый релиз</summary>
-            <ol style="margin:8px 0 0 18px; font-size:.82rem; color:#adb2c7; line-height:1.6">
-              <li>Соберите папку с готовой игрой (например, <code>build/</code> после вашего сборщика).</li>
-              <li>Запустите <b>SAMOT Packager</b> (кнопка скачивания чуть ниже в этом разделе): выберите папку игры, укажите версию и тег, нажмите «Собрать релиз». Появится папка <code>game-dist/</code> с <code>pack-*.zip</code>, <code>manifest.json</code> и <code>RELEASE-INSTRUCTIONS.txt</code>.</li>
-              <li>На GitHub → Releases → «Draft a new release» → задайте тег (например, <code>v1.2.0</code>) и описание.</li>
-              <li>Залейте туда <b>всё содержимое</b> <code>game-dist/</code> (manifest.json + все ассеты).</li>
-              <li>Вернитесь сюда, введите этот же тег в поле «Тег релиза», нажмите «Проверить релиз на GitHub» — лаунчер увидит файлы.</li>
-              <li>После успешной проверки нажмите «Сохранить». Кнопка «Скачать» в лаунчере будет качать игру по манифесту.</li>
-            </ol>
-          </details>
         </div>
       </section>
 
@@ -814,7 +800,7 @@
         </div>
 
                 <div class="card" style="margin-top:14px">
-          <h3>SAMOT Packager — сборка игры для релиза (.exe)</h3>
+          <h3>SAMOT Packager — сборка игры для релиза</h3>
           <p class="page-sub" style="margin:4px 0 10px">Отдельная программа для Windows: выбирает папку игры, пакует файлы в <code>pack-*.zip</code>, считает SHA-256 и формирует <code>manifest.json</code> + короткую инструкцию по публикации. Установка не требуется (portable), 72&nbsp;МБ, подписана сертификатом SAMOT.</p>
           <button type="button" class="btn btn-primary" id="btn-download-packager">⬇️ Скачать SAMOT Packager 1.0.0</button>
           <p class="page-sub" style="margin:10px 0 0">Запускается двойным кликом: папка игры → версия → «Собрать релиз» → готовая папка <code>game-dist</code>. Исходники и подробности — в репозитории <code>samot-tools</code>.</p>
@@ -954,7 +940,7 @@
               <li><b>Stack Overflow</b> — задавайте вопрос с минимумом кода и ошибкой в кавычках; 90% задач уже решены до вас.</li>
             </ul>
 
-            <p class="page-sub" style="margin-top:10px; font-size:.78rem; color:var(--text-dim)">Дисклеймер: сторонние сервисы могут менять условия в любой момент; ссылки приведены для удобства и не являются рекламой. Пруфите SHA-256 любых загрузок через встроенный <code>certutil -hashfile &lt;file&gt; SHA256</code>.</p>
+            <p class="page-sub" style="margin-top:10px; font-size:.78rem; color:var(--text-dim)">Дисклеймер: мы не несём ответственности за использованные вами ресурсы — их доступность, условия использования и безопасность остаются на вашем усмотрении. Предложенные варианты не являются рекламой. Пруфите SHA-256 любых загрузок через встроенный <code>certutil -hashfile &lt;file&gt; SHA256</code>.</p>
           </div>
         </details>
 
@@ -1059,7 +1045,6 @@
   </div>
 
   <script src="../../node_modules/@supabase/supabase-js/dist/umd/supabase.js"></script>
-  <script src="admin-flag.js"></script>
   <script src="../documents.js"></script>
   <script src="../config.js"></script>
   <script src="templates.js"></script>

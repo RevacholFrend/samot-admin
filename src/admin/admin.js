@@ -10,15 +10,39 @@ const sb = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, {
   auth: { flowType: 'pkce' },
 });
 
-const NEWS_TAGS = ['Анонс', 'Патчнот', 'Ивент', 'Турнир', 'Прочее'];
+const NEWS_TAGS = ['Анонс', 'Патчноут', 'Ивент', 'Турнир', 'Прочее'];
 (function fillTagSelect() {
   const sel = document.getElementById('nf-tag');
   if (sel) sel.innerHTML = NEWS_TAGS.map((tag) => `<option value="${tag}">${tag}</option>`).join('');
 })();
 
+// Версия игры == тег релиза — одна сущность.
+// В манифесте это `version` («1.0.0»), тег релиза GitHub — с префиксом «v» («v1.0.0»).
+function normalizeReleaseTag(raw) {
+  const t = String(raw || '').trim();
+  if (!t) return '';
+  return /^v/i.test(t) ? 'v' + t.slice(1) : 'v' + t;
+}
+function normalizeVersion(raw) {
+  return String(raw || '').trim().replace(/^v/i, '');
+}
+// Вытащить версию из текста manifest.json (или из готового объекта)
+function parseManifestVersion(manifestText) {
+  try {
+    const m = JSON.parse(manifestText);
+    const v = String(m?.version || '').trim();
+    const tag = String(m?.tag || '').trim();
+    if (!v && !tag) return null;
+    const version = normalizeVersion(v || tag);
+    return { version, tag: tag ? normalizeReleaseTag(tag) : normalizeReleaseTag(version) };
+  } catch {
+    return null;
+  }
+}
+
 const SETTINGS_KEYS = [
   'game_name', 'game_version', 'download_url', 'update_notes',
-  'maintenance', 'min_launcher_version', 'download_available',
+  'maintenance', 'download_available',
   'game_image_url', 'media_banner', 'media_thumbnail', 'media_card', 'media_news', 'media_screenshots',
   'media_release_date', 'media_languages', 'media_developer', 'media_developer_contact', 'media_long_description',
   'game_owner', 'game_repo', 'game_tag', 'game_enabled', 'game_manifest',
@@ -30,7 +54,7 @@ const CURRENT_PROJECT_KEY = 'samot_admin_current_project';
 const DEMO_ADMIN = new URLSearchParams(window.location.search).get('demo') === 'admin';
 const DEMO_NEWS = [
   { id: 3, project_id: 1, title: 'Турнир к запуску', tag: 'Турнир', excerpt: 'Фонд 50 000 ₽. Регистрация открыта.', body: 'Формат: 5×5, single elimination.', image_url: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=1600&q=80', published_at: new Date(Date.now() - 86400000).toISOString(), active: true },
-  { id: 2, project_id: 1, title: 'Патч 0.9.4 «Буря»', tag: 'Патчнот', excerpt: 'Краш исправили, загрузка быстрее.', body: 'Исправлен краш рейда; загрузка локаций на 30% быстрее.', image_url: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=1600&q=80', published_at: new Date(Date.now() - 3 * 86400000).toISOString(), active: true },
+  { id: 2, project_id: 1, title: 'Патч 0.9.4 «Буря»', tag: 'Патчноут', excerpt: 'Краш исправили, загрузка быстрее.', body: 'Исправлен краш рейда; загрузка локаций на 30% быстрее.', image_url: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=1600&q=80', published_at: new Date(Date.now() - 3 * 86400000).toISOString(), active: true },
   { id: 1, project_id: 1, title: 'Закрытая бета', tag: 'Анонс', excerpt: 'Бета начнётся 15 ноября.', body: 'Следите за новостями.', image_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&q=80', published_at: new Date(Date.now() - 5 * 86400000).toISOString(), active: false },
 ];
 const DEMO_PROJECTS = [{ id: 1, name: 'SAMOT game', slug: 'samot', is_hidden: false, tagline: 'Твой мир. Твоя игра.', logo: '🎮', color: '#7c5cff', role: 'owner' }];
@@ -38,7 +62,7 @@ const DEMO_SETTINGS = {
   game_name: 'SAMOT game', game_version: '0.9.4',
   download_url: 'https://github.com/example/samot/releases/download/v0.9.4/GameSetup.exe',
   update_notes: '— Новый рейд «Башня»\n— Ускорена загрузка локаций на 30%\n— Исправлен краш при входе в рейд',
-  maintenance: 'false', min_launcher_version: '1.0.0',
+  maintenance: 'false',
 };
 const DEMO_MEMBERS = [{ email: 'owner@example.com', role: 'owner' }];
 
@@ -774,11 +798,12 @@ $('#news-form').addEventListener('submit', async (e) => {
 // =====================================================
 function applySettingsToForm(map) {
   $('#sf-game-name').value = map.game_name || '';
-  $('#sf-game-version').value = map.game_version || '';
+  if ($('#sf-game-tag-settings')) {
+    $('#sf-game-tag-settings').value = map.game_tag || (map.game_version ? normalizeReleaseTag(map.game_version) : '');
+  }
   $('#sf-download-url').value = map.download_url || '';
   $('#sf-update-notes').value = map.update_notes || '';
   $('#sf-maintenance').value = map.maintenance || 'false';
-  $('#sf-min-launcher').value = map.min_launcher_version || '1.0.0';
   if ($('#sf-download-available')) $('#sf-download-available').value = map.download_available || 'true';
   if ($('#sf-game-image-url')) $('#sf-game-image-url').value = map.game_image_url || '';
   if ($('#media-banner')) $('#media-banner').value = map.media_banner || '';
@@ -816,16 +841,15 @@ $('#btn-settings-save').addEventListener('click', async () => {
   const pid = state.currentProjectId;
   const values = {
     game_name: $('#sf-game-name').value.trim(),
-    game_version: $('#sf-game-version').value.trim(),
+    game_version: normalizeVersion($('#sf-game-tag').value),
     download_url: $('#sf-download-url').value.trim(),
     update_notes: $('#sf-update-notes').value.trim(),
     maintenance: $('#sf-maintenance').value,
-    min_launcher_version: $('#sf-min-launcher').value.trim(),
     download_available: $('#sf-download-available').value === 'true',
     game_image_url: $('#sf-game-image-url').value.trim(),
     game_owner: $('#sf-game-owner').value.trim(),
     game_repo: $('#sf-game-repo').value.trim(),
-    game_tag: $('#sf-game-tag').value.trim(),
+    game_tag: normalizeReleaseTag($('#sf-game-tag').value),
     game_enabled: $('#sf-game-enabled').value,
     game_manifest: $('#sf-game-manifest').value,
     media_banner: $('#media-banner').value.trim(),
@@ -876,8 +900,9 @@ async function loadMembers(pid) {
 function renderMembersList(data) {
   const list = $('#members-list');
   const empty = $('#members-empty');
+  // Показываем ВСЕХ участников, включая вас (отметка «Вы») и строки без email,
+  // иначе после удаления «невидимый» участник мешает повторному приглашению.
   const myEmail = (state.user?.email || '').toLowerCase();
-  data = data.filter((m) => (m.email || '').toLowerCase() !== myEmail);
 
   empty.style.display = data.length ? 'none' : 'block';
 
@@ -900,8 +925,19 @@ function renderMembersList(data) {
       if (DEMO_ADMIN) return demoNotice();
       const uid = btn.dataset.remove;
       if (!(await uiConfirm({ title: 'Удалить участника', message: 'Удалить участника из проекта?', okLabel: 'Удалить', danger: true }))) return;
-      const { error } = await sb.from('project_members').delete().eq('project_id', state.currentProjectId).eq('user_id', uid);
+      const { data: removed, error } = await sb
+        .from('project_members')
+        .delete()
+        .eq('project_id', state.currentProjectId)
+        .eq('user_id', uid)
+        .select('user_id');
       if (error) return toast(friendlyError(error.message), true);
+      // RLS может молча удалить 0 строк (недостаточно прав / строка невидима) — не врать «удалено»
+      if (Array.isArray(removed) && removed.length === 0) {
+        toast('Участник не удалён: нет прав на удаление в этом проекте.', true);
+        await loadMembers(state.currentProjectId);
+        return;
+      }
       toast('Участник удалён.');
       await loadMembers(state.currentProjectId);
     })
@@ -929,19 +965,18 @@ $('#add-member-form').addEventListener('submit', async (e) => {
     const row = Array.isArray(found) ? found[0] : found;
     if (!row || !row.user_id) throw new Error('Пользователь с таким email не найден. Он должен сначала зарегистрироваться в лаунчере.');
 
-    const { error } = await sb.from('project_members').insert({
-      project_id: state.currentProjectId,
-      user_id: row.user_id,
-      email: row.email,
-      role: ($('#am-role')?.value || 'editor'),
+    const role = $('#am-role')?.value || 'editor';
+    // invite_member (RPC) делает upsert: повторное приглашение обновляет роль,
+    // вместо ошибки «уже участник проекта» из-за «висящей» строки.
+    const { data: invite, error } = await sb.rpc('invite_member', {
+      p_project_id: state.currentProjectId,
+      p_email: row.email,
+      p_role: role,
     });
-    if (error) {
-      if ((error.message || '').toLowerCase().includes('duplicate')) throw new Error('Этот пользователь уже участник проекта.');
-      throw error;
-    }
+    if (error) throw error;
 
     $('#am-email').value = '';
-    toast(`Приглашение отправлено: ${row.email} (роль «editor»)`);
+    toast(`Приглашение отправлено: ${row.email} (роль «${role}»)`);
     await loadMembers(state.currentProjectId);
   } catch (err) {
     errEl.textContent = friendlyError(err?.message);
@@ -2183,6 +2218,7 @@ async function loadGameForm(pid) {
     if ($('#sf-game-owner')) $('#sf-game-owner').value = 'example-owner';
     if ($('#sf-game-repo')) $('#sf-game-repo').value = 'example-repo';
     if ($('#sf-game-tag')) $('#sf-game-tag').value = 'v1.0.0';
+    if ($('#sf-game-tag-settings')) $('#sf-game-tag-settings').value = 'v1.0.0';
     updateManifestUrlPreview();
     renderGameStatus({ ok: true, note: 'Демо-режим', version: '1.0.0', files: 3, totalBytes: 131072 });
     return;
@@ -2193,8 +2229,9 @@ async function loadGameForm(pid) {
   $('#sf-game-enabled').value = map.game_enabled || 'false';
   $('#sf-game-owner').value = map.game_owner || '';
   $('#sf-game-repo').value = map.game_repo || '';
-  $('#sf-game-tag').value = map.game_tag || '';
+  $('#sf-game-tag').value = map.game_tag || (map.game_version ? normalizeReleaseTag(map.game_version) : '');
   $('#sf-game-manifest').value = map.game_manifest || '';
+  if ($('#sf-game-tag-settings')) $('#sf-game-tag-settings').value = $('#sf-game-tag').value;
   updateManifestUrlPreview();
   renderGameStatus({ ok: true, note: 'Манифест из настроек (' + (map.game_manifest ? 'есть' : 'нет') + ')' });
 }
@@ -2205,19 +2242,6 @@ function updateManifestUrlPreview() {
   const tag = ($('#sf-game-tag')?.value || '').trim() || 'TAG';
   const previewEl = $('#sf-game-manifest-url');
   if (previewEl) previewEl.value = manifestUrl(owner, repo, tag);
-}
-
-async function isReleaseAlive(owner, repo, tag) {
-  try {
-    const res = await fetch(manifestUrl(owner, repo, tag), { method: 'GET', cache: 'no-store' });
-    if (!res.ok) return { ok: false, error: 'HTTP ' + res.status };
-    const json = await res.json();
-    if (!json || !Array.isArray(json.files)) return { ok: false, error: 'Манифест без files[]' };
-    const totalBytes = json.files.reduce((a, f) => a + Number(f.size || 0), 0);
-    return { ok: true, files: json.files.length, version: json.version || '—', totalBytes };
-  } catch (err) {
-    return { ok: false, error: String(err?.message || err) };
-  }
 }
 
 function renderGameStatus(info) {
@@ -2232,32 +2256,40 @@ function renderGameStatus(info) {
     '</span>';
 }
 
-$$('#sf-game-owner, #sf-game-repo, #sf-game-tag').forEach((el) => el.addEventListener('input', updateManifestUrlPreview));
+$$('#sf-game-owner, #sf-game-repo, #sf-game-tag').forEach((el) => el.addEventListener('input', () => {
+  updateManifestUrlPreview();
+  if (el.id === 'sf-game-tag' && $('#sf-game-tag-settings')) {
+    $('#sf-game-tag-settings').value = el.value;
+  }
+}));
+// Вставка/изменение manifest.json — автоматически подставляем тег релиза и версию.
+// Это снимает главный источник путаницы «написал тег не в тот релиз».
+$('#sf-game-manifest')?.addEventListener('input', () => {
+  const info = parseManifestVersion($('#sf-game-manifest').value);
+  if (!info) return;
+  const tagInput = $('#sf-game-tag');
+  if (tagInput) {
+    tagInput.value = info.tag;
+    updateManifestUrlPreview();
+    if ($('#sf-game-tag-settings')) $('#sf-game-tag-settings').value = info.tag;
+  }
+});
 $('#btn-game-save')?.addEventListener('click', async () => {
   if (DEMO_ADMIN) { demoNotice(); return; }
   const pid = state.currentProjectId;
   if (!pid) return toast('Нет проекта.', true);
+  const tagValue = normalizeReleaseTag($('#sf-game-tag').value);
   const rows = [
     { project_id: pid, key: 'game_enabled', value: $('#sf-game-enabled').value },
     { project_id: pid, key: 'game_owner', value: $('#sf-game-owner').value.trim() },
     { project_id: pid, key: 'game_repo', value: $('#sf-game-repo').value.trim() },
-    { project_id: pid, key: 'game_tag', value: $('#sf-game-tag').value.trim() },
+    { project_id: pid, key: 'game_tag', value: tagValue },
+    { project_id: pid, key: 'game_version', value: normalizeVersion(tagValue) },
     { project_id: pid, key: 'game_manifest', value: $('#sf-game-manifest').value },
   ];
   const { error } = await sb.from('settings').upsert(rows, { onConflict: 'project_id,key' });
   if (error) return toast(friendlyError(error.message), true);
   toast('Параметры игры сохранены.');
-});
-$('#btn-game-validate')?.addEventListener('click', async () => {
-  const owner = ($('#sf-game-owner')?.value || '').trim();
-  const repo = ($('#sf-game-repo')?.value || '').trim();
-  const tag = ($('#sf-game-tag')?.value || '').trim();
-  if (!owner || !repo || !tag) return toast('Заполните owner/repo/tag.', true);
-  renderGameStatus({ ok: true, note: 'Проверяю…' });
-  const alive = await isReleaseAlive(owner, repo, tag);
-  renderGameStatus(alive);
-  if (alive.ok) toast('Релиз доступен. Файлов: ' + alive.files);
-  else toast('Релиз не найден: ' + (alive.error || ''), true);
 });
 
 // =====================================================
