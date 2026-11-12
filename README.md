@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logoAdmin.svg" alt="SAMOT Admin" width="120">
+  <img src="assets/samot_phone_1440x2560_negate.png" alt="SAMOT Admin" width="120">
 </p>
 
 <h1 align="center">SAMOT Admin</h1>
