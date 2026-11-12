@@ -1946,7 +1946,6 @@ async function loadFeaturedAdmin() {
       if (error) return toast(friendlyError(error.message), true);
       toast(f.published ? 'Скрыт.' : 'Опубликован.');
       loadFeaturedAdmin();
-  if (typeof loadBrandNewsAdmin === 'function') loadBrandNewsAdmin();
     });
     row.querySelector('.featured-delete-btn')?.addEventListener('click', async () => {
       if (!(await uiConfirm({ title: 'Удалить постер', message: 'Удалить постер «' + (f?.title || ('#' + id)) + '»?', okLabel: 'Удалить', danger: true }))) return;
@@ -2017,8 +2016,9 @@ async function loadBrandNewsAdmin() {
   if (!list) return;
   if (!state.isSuper) { list.innerHTML = '<p class="page-sub">Только супер-администратор.</p>'; return; }
   list.innerHTML = '<p class="page-sub">Загружаю…</p>';
-  const { data, error } = await sb.from('news').select('*').in('kind', ['samot', 'event']).order('published_at', { ascending: false });
-  if (error) { list.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(error.message)) + '</p>'; return; }
+  try {
+    const { data, error } = await sb.from('news').select('*').in('kind', ['samot', 'event']).order('published_at', { ascending: false });
+    if (error) { list.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(error.message)) + '</p>'; return; }
   const rows = data || [];
   if (!rows.length) { list.innerHTML = '<p class="page-sub">Новостей SAMOT пока нет. Создайте первую.</p>'; return; }
   list.innerHTML = rows.map((n) => {
@@ -2038,8 +2038,7 @@ async function loadBrandNewsAdmin() {
     '</div>';
   }).join('');
 
-  list.querySelectorAll('.home-news-admin-row').forEach((row) => {
-    const id = Number(row.dataset.id);
+  list.querySelectorAll('.home-news-admin-row').forEach((row) => {    const id = Number(row.dataset.id);
     const n = rows.find((x) => x.id === id);
     row.querySelector('.brand-edit-btn')?.addEventListener('click', () => openBrandForm(n));
     row.querySelector('.brand-toggle-btn')?.addEventListener('click', async () => {
@@ -2059,6 +2058,10 @@ async function loadBrandNewsAdmin() {
       loadHomeAdmin();
     });
   });
+  } catch (e) {
+    // не оставляем «Загружаю…» навечно — показываем текст ошибки
+    list.innerHTML = '<p class="form-error">Не удалось загрузить новости SAMOT: ' + escapeHtml(e?.message || String(e)) + '</p>';
+  }
 }
 
 function openBrandForm(n) {
@@ -2509,6 +2512,7 @@ async function loadHomeAdmin() {
   allList.innerHTML = '<p class="page-sub">Загружаю…</p>';
   newsList.innerHTML = '<p class="page-sub">Загружаю…</p>';
   loadFeaturedAdmin();
+  loadBrandNewsAdmin();
 
   const rows = await Promise.all(state.projects.map(async (p) => {
     const { data } = await sb.from('settings').select('key,value').eq('project_id', p.id).in('key', ['media_banner', 'media_show_home', 'media_home_sort']);

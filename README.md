@@ -7,7 +7,7 @@
 <p align="center"><b>Панель администратора и разработчика для SAMOT Launcher</b></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-1.0.4-ff6b1a">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.0.5-ff6b1a">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-2ea3f2">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-39d98a">
   <img alt="Stack" src="https://img.shields.io/badge/stack-Electron.%2B.Supabase-7c5cff">
