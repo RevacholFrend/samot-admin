@@ -236,6 +236,8 @@ async function checkForAdminUpdate() {
     if (cmpSemver(latest, current) <= 0) return;
     state.adminUpdate = { latest, url, sha256: data.sha256 || '' };
     renderAdminUpdateBanner();
+    // Полностью автоматический режим: приложение само скачивает и ставит обновление
+    try { await adminUpdateNow(); } catch { /* оставим кнопку на случай ошибки */ }
   } catch { /* офлайн или ранняя ошибка — молчим */ }
 }
 
@@ -2392,6 +2394,11 @@ function ensureConsentThen() {
 //  СТАРТ
 // =====================================================
 (async function init() {
+  // Показываем версию в шапке сайдбара (как в лаунчере)
+  try {
+    const v = window.adminEnv?.getAppVersion ? await window.adminEnv.getAppVersion() : null;
+    if (v) $('#admin-tb-version').textContent = 'v' + v;
+  } catch { /* версия необязательна */ }
   // Наполняем тексты документов (модал согласия + вкладка «Документы»)
   window.SAMOT_DOCS_ADMIN = true;
   try { window.SAMOT_DOCS_FILL && window.SAMOT_DOCS_FILL(); } catch (e) { console.warn('docs fill failed', e); }
