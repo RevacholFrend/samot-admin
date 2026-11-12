@@ -10,7 +10,7 @@
   <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-ff6b1a">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-2ea3f2">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-39d98a">
-  <img alt="Stack" src="https://img.shields.io/badge/stack-Electron%20%2B%20Supabase-7c5cff">
+  <img alt="Stack" src="https://img.shields.io/badge/stack-Electron.%2B.Supabase-7c5cff">
 </p>
 
 ---
@@ -41,8 +41,8 @@
 
 | Что | Файл |
 |---|---|
-| **SAMOT Admin** | [SAMOT Admin Setup 1.0.0.exe](https://github.com/RevacholFrend/samot-admin/releases/download/v1.0.0/SAMOT%20Admin%20Setup%201.0.0.exe) |
-| **SAMOT Launcher** (для игроков) | [SAMOT Launcher Setup 1.0.0.exe](https://github.com/RevacholFrend/samot-launcher/releases/download/v1.0.0/SAMOT%20Launcher%20Setup%201.0.0.exe) |
+| **SAMOT Admin** | [SAMOT Admin Setup 1.0.0.exe](https://github.com/RevacholFrend/samot-admin/releases/download/v1.0.0/SAMOT.Admin.Setup.1.0.0.exe) |
+| **SAMOT Launcher** (для игроков) | [SAMOT Launcher Setup 1.0.0.exe](https://github.com/RevacholFrend/samot-launcher/releases/download/v1.0.0/SAMOT.Launcher.Setup.1.0.0.exe) |
 | **SAMOT Packager** (утилита сборки игры) | [SAMOT-Packager-1.0.0.exe](https://github.com/RevacholFrend/SAMOT-releases/releases/download/tools-v1.0.0/SAMOT-Packager-1.0.0.exe) |
 
 > ℹ При первом запуске Windows SmartScreen может предупредить: сертификат самоподписанный.
