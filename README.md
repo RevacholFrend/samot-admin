@@ -43,7 +43,7 @@
 |---|---|
 | **SAMOT Admin** | [SAMOT Admin Setup.exe](https://github.com/RevacholFrend/samot-admin/releases/latest/download/SAMOT-Admin-Setup.exe) |
 | **SAMOT Launcher** (для игроков) | [SAMOT Launcher Setup.exe](https://github.com/RevacholFrend/samot-launcher/releases/latest/download/SAMOT-Launcher-Setup.exe) |
-| **SAMOT Packager** (утилита сборки игры) | [SAMOT-Packager-1.0.0.exe](https://github.com/RevacholFrend/SAMOT-releases/releases/download/tools-v1.0.0/SAMOT-Packager-1.0.0.exe) |
+| **SAMOT Packager** (утилита сборки игры) | [SAMOT-Packager-1.0.0.exe](https://github.com/RevacholFrend/samot-tools/releases/latest/download/SAMOT-Packager.exe) |
 
 > ℹ При первом запуске Windows SmartScreen может предупредить: сертификат самоподписанный.
 

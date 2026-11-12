@@ -2648,7 +2648,7 @@ function renderDevTemplates() {
     '</div>').join('');
 }
 
-const PACKAGER_URL = 'https://github.com/RevacholFrend/SAMOT-releases/releases/download/tools-v1.0.0/SAMOT-Packager-1.0.0.exe';
+const PACKAGER_URL = 'https://github.com/RevacholFrend/samot-tools/releases/latest/download/SAMOT-Packager.exe';
 $('#btn-download-packager')?.addEventListener('click', () => {
   if (window.adminEnv?.openExternal) window.adminEnv.openExternal(PACKAGER_URL);
   else window.open(PACKAGER_URL, '_blank');
