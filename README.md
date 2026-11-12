@@ -74,13 +74,6 @@ npm run dist       # собрать установщик (dist/SAMOT Admin Setup
 Требования: Windows 10+, Node.js LTS. Бэкенд — Supabase (схема и миграции — в репозитории [samot-launcher](https://github.com/RevacholFrend/samot-launcher)).
 
 ```
-samot-admin/
-├─ admin-main.js / admin-preload.js
-├─ src/admin/          # интерфейс админки (вкладки, формы, вики)
-├─ src/documents.js    # служебные документы (соглашение/ПД/правила)
-├─ tools/packager/     # SAMOT Packager: сборка релиза игры
-└─ tests/              # интегральные тесты и дымовой запуск
-```
 
 > Два репозитория держим синхронными по `src/config.js` и `src/documents.js` — при правках меняйте в обоих.
 
