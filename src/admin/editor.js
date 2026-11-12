@@ -3,7 +3,7 @@
 //  Манипуляции с базой через Supabase (та же сессия в shared partition).
 //  Пока окно открыто — изменения стоят в памяти; «Сохранить» — отправляем все.
 // =====================================================
-const cfg = window.CFG || { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };
+const cfg = window.APP_CONFIG || { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };
 const url = new URL(location.href);
 const pid = Number(url.searchParams.get('project') || 0);
 const sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
