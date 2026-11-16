@@ -128,8 +128,11 @@
 
         <div class="card" style="margin-top:14px">
           <h3>Новости на Главной</h3>
-          <p class="page-sub" style="margin:4px 0 10px">Показываются всем игрокам на «Главной». Убрать с Главной — кнопкой ниже; вернуть — флажком «Показывать в «Последних новостях» на Главной» в редакторе новости.</p>
-          <div id="home-news-admin-list"></div>
+          <p class="page-sub" style="margin:4px 0 10px">Перетаскивайте мышкой: в/из «На Главной» — показ включается/выключается (как у проектов); внутри списка — меняет порядок в карусели и в «Последние новости».</p>
+          <h4 class="sp-title" style="font-size:.78rem; margin:10px 0 6px; text-transform:none; letter-spacing:0">В карусели / на Главной</h4>
+          <div id="home-news-in" class="home-carousel-list home-drop-target"></div>
+          <h4 class="sp-title" style="font-size:.78rem; margin:14px 0 6px; text-transform:none; letter-spacing:0">Не на Главной</h4>
+          <div id="home-news-out" class="home-carousel-list home-drop-target"></div>
         </div>
 
         <div class="card" style="margin-top:14px">
@@ -137,7 +140,10 @@
             <button type="button" class="btn btn-primary btn-sm" id="btn-add-featured" style="margin-left:auto">➕ Новый постер</button>
           </div>
           <p class="page-sub" style="margin-top:6px">Отдельные рекламные слайды для карусели «Главной» — например, «Запуск v1.0.0», «SAMOT Summer Sale», «1000 игроков в Discord». Применяются только по клику «Опубликовать». Поведение кнопки: заполнена «Ссылка кнопки» — откроется ссылка; пуста, но заполнен «Текст «Подробнее»» — откроется окно с этим текстом; оба пусты — кнопки не будет (постер говорит сам за себя).</p>
-          <div id="featured-list" class="featured-list"><p class="page-sub">Загружаем…</p></div>
+          <h4 class="sp-title" style="font-size:.78rem; margin:10px 0 6px; text-transform:none; letter-spacing:0">В карусели</h4>
+          <div id="featured-in" class="home-carousel-list home-drop-target"></div>
+          <h4 class="sp-title" style="font-size:.78rem; margin:14px 0 6px; text-transform:none; letter-spacing:0">Не в карусели</h4>
+          <div id="featured-out" class="home-carousel-list home-drop-target"></div>
 
           <div id="featured-form" class="hidden" style="margin-top:14px; padding:12px; border:1px solid var(--border); background: var(--card-2);">
             <div class="sp-title" style="margin-bottom:10px" id="featured-form-title">Новый постер</div>

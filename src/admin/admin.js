@@ -1911,53 +1911,121 @@ $('#audit-search')?.addEventListener('input', () => { clearTimeout(window.__audi
 //  ОФИЦИАЛЬНЫЕ ПОСТЕРЫ (featured slides) — супер-админ
 // =====================================================
 async function loadFeaturedAdmin() {
-  const list = $('#featured-list');
-  if (!list) return;
-  list.innerHTML = '<p class="page-sub">Загружаю…</p>';
+  const inList = $('#featured-in');
+  const outList = $('#featured-out');
+  if (!inList || !outList) return;
+  inList.innerHTML = '<p class="page-sub">Загружаю…</p>';
+  outList.innerHTML = '';
   const { data, error } = await sb.rpc('list_featured_admin');
-  if (error) { list.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(error.message)) + '</p>'; return; }
-  if (!data || !data.length) { list.innerHTML = '<p class="page-sub">Официальных постеров нет. Добавьте первый.</p>'; return; }
-  list.innerHTML = data.map((f) => {
-    const expired = f.expires_at && new Date(f.expires_at) < new Date();
+  if (error) { inList.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(error.message)) + '</p>'; return; }
+  const now = new Date();
+  const isLive = (f) => f.published && (!f.expires_at || new Date(f.expires_at) > now);
+  const inF = (data || []).filter(isLive).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.id - b.id);
+  const outF = (data || []).filter((f) => !isLive(f)).sort((a, b) => b.id - a.id);
+
+  const renderRow = (f, inCar) => {
+    const expired = f.expires_at && new Date(f.expires_at) < now;
     const status = expired ? 'истёк' : (f.published ? 'виден' : 'скрыт');
     const statusClass = expired || !f.published ? 'off' : 'on';
-    const sort = f.sort ?? 0;
     const action = f.cta_url ? '🔗 ссылка' : (f.body ? '📄 подробнее' : '🚫 без кнопки');
-    return '<div class="home-news-admin-row" data-id="' + f.id + '">' +
-      '<div class="home-news-admin-meta"><b>' + escapeHtml(f.title) + '</b>' +
-        '<span class="page-sub">sort ' + sort + ' · ' + action + '</span></div>' +
-      '<div style="display:flex; gap:6px; align-items:center">' +
-        '<span class="badge ' + statusClass + '">' + status + '</span>' +
-        '<button type="button" class="icon-btn featured-edit-btn" title="✏️ Редактировать">✏️</button>' +
-        '<button type="button" class="icon-btn featured-toggle-btn" title="Виден/скрыт">👁️</button>' +
-        '<button type="button" class="icon-btn del featured-delete-btn" title="Удалить">🗑️</button>' +
-      '</div>' +
+    const thumb = f.image_url ? '<img src="' + escapeHtml(f.image_url) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'" />' : '<span>📰</span>';
+    return '<div class="home-carousel-row" draggable="true" data-id="' + f.id + '" data-in="' + (inCar ? '1' : '0') + '">' +
+      '<div class="home-drag-handle" title="Потяните">⠿</div>' +
+      '<div class="home-carousel-thumb">' + thumb + '</div>' +
+      '<div class="home-carousel-meta"><b>' + escapeHtml(f.title) + '</b><span class="page-sub">' + action + ' · sort ' + (f.sort ?? 0) + '</span></div>' +
+      '<span class="badge ' + statusClass + '">' + status + '</span>' +
+      '<button type="button" class="icon-btn featured-edit-btn" title="✏️ Редактировать">✏️</button>' +
+      '<button type="button" class="icon-btn featured-toggle-btn" title="Виден/скрыт">👁️</button>' +
+      '<button type="button" class="icon-btn del featured-delete-btn" title="Удалить">🗑️</button>' +
     '</div>';
-  }).join('');
-  list.querySelectorAll('.home-news-admin-row').forEach((row) => {
-    const id = Number(row.dataset.id);
-    const f = (data || []).find((x) => x.id === id);
-    row.querySelector('.featured-edit-btn')?.addEventListener('click', () => openFeaturedForm(f));
-    row.querySelector('.featured-toggle-btn')?.addEventListener('click', async () => {
-      if (!f) return;
-      const { error } = await sb.rpc('upsert_featured', {
+  };
+  inList.innerHTML = inF.length ? inF.map((f) => renderRow(f, true)).join('') : '<p class="page-sub">Пусто. Перетащите постер сюда из нижнего списка.</p>';
+  outList.innerHTML = outF.length ? outF.map((f) => renderRow(f, false)).join('') : '<p class="page-sub">Все постеры уже в карусели.</p>';
+
+  const findF = (id) => (data || []).find((x) => x.id === id);
+  const toggleFeatured = async (f, targetPublished) => {
+    const expired = f.expires_at && new Date(f.expires_at) < now;
+    if (targetPublished && expired) { toast('Постер истёк — создайте новый.', true); return; }
+    const { error } = await sb.rpc('upsert_featured', {
+      p_id: f.id, p_title: f.title, p_tagline: f.tagline,
+      p_image_url: f.image_url, p_cta_label: f.cta_label, p_cta_url: f.cta_url,
+      p_sort: f.sort, p_published: targetPublished, p_expires_at: f.expires_at,
+      p_body: f.body || '',
+    });
+    if (error) return toast(friendlyError(error.message), true);
+    toast(targetPublished ? 'Постер в карусели.' : 'Постер убран из карусели.');
+    loadFeaturedAdmin();
+  };
+  const persistFeaturedOrder = async () => {
+    const rows = [...inList.querySelectorAll('.home-carousel-row[data-id]')];
+    await Promise.all(rows.map((row, i) => {
+      const f = findF(Number(row.dataset.id));
+      if (!f) return Promise.resolve();
+      return sb.rpc('upsert_featured', {
         p_id: f.id, p_title: f.title, p_tagline: f.tagline,
         p_image_url: f.image_url, p_cta_label: f.cta_label, p_cta_url: f.cta_url,
-        p_sort: f.sort, p_published: !f.published, p_expires_at: f.expires_at,
+        p_sort: i + 1, p_published: true, p_expires_at: f.expires_at,
         p_body: f.body || '',
       });
-      if (error) return toast(friendlyError(error.message), true);
-      toast(f.published ? 'Скрыт.' : 'Опубликован.');
-      loadFeaturedAdmin();
-    });
-    row.querySelector('.featured-delete-btn')?.addEventListener('click', async () => {
-      if (!(await uiConfirm({ title: 'Удалить постер', message: 'Удалить постер «' + (f?.title || ('#' + id)) + '»?', okLabel: 'Удалить', danger: true }))) return;
-      const { error } = await sb.rpc('delete_featured', { p_id: id });
-      if (error) return toast(friendlyError(error.message), true);
-      toast('Постер удалён.');
-      loadFeaturedAdmin();
+    }));
+    loadFeaturedAdmin();
+  };
+
+  [inList, outList].forEach((zone) => {
+    zone.querySelectorAll('.home-carousel-row').forEach((row) => {
+      const id = Number(row.dataset.id);
+      const f = findF(id);
+      if (!f) return;
+      row.querySelector('.featured-edit-btn')?.addEventListener('click', () => openFeaturedForm(f));
+      row.querySelector('.featured-toggle-btn')?.addEventListener('click', () => toggleFeatured(f, !f.published));
+      row.querySelector('.featured-delete-btn')?.addEventListener('click', async () => {
+        if (!(await uiConfirm({ title: 'Удалить постер', message: 'Удалить постер «' + (f?.title || ('#' + id)) + '»?', okLabel: 'Удалить', danger: true }))) return;
+        const { error } = await sb.rpc('delete_featured', { p_id: id });
+        if (error) return toast(friendlyError(error.message), true);
+        toast('Постер удалён.');
+        loadFeaturedAdmin();
+      });
     });
   });
+
+  const bindFeaturedDnd = () => {
+    [inList, outList].forEach((zone) => {
+      zone.addEventListener('dragover', (e) => e.preventDefault());
+      zone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const draggedId = Number(e.dataTransfer.getData('text/plain'));
+        if (!draggedId) return;
+        const f = findF(draggedId);
+        if (f) await toggleFeatured(f, zone === inList);
+      });
+    });
+    [...inList.querySelectorAll('.home-carousel-row'), ...outList.querySelectorAll('.home-carousel-row')].forEach((row) => {
+      row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', row.dataset.id); row.classList.add('dragging'); });
+      row.addEventListener('dragend', () => row.classList.remove('dragging'));
+      row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('dragover'); });
+      row.addEventListener('dragleave', () => row.classList.remove('dragover'));
+      row.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        row.classList.remove('dragover');
+        const draggedId = Number(e.dataTransfer.getData('text/plain'));
+        const targetId = Number(row.dataset.id);
+        if (!draggedId || draggedId === targetId) return;
+        const dragged = document.querySelector('#featured-in [data-id="' + draggedId + '"], #featured-out [data-id="' + draggedId + '"]');
+        const f = findF(draggedId);
+        if (!dragged || !f) return;
+        const toIn = row.closest('#featured-in') !== null;
+        if (toIn) {
+          const rect = row.getBoundingClientRect();
+          const before = e.clientY < rect.top + rect.height / 2;
+          inList.insertBefore(dragged, before ? row : row.nextSibling);
+          await persistFeaturedOrder();
+        } else {
+          await toggleFeatured(f, false);
+        }
+      });
+    });
+  };
+  bindFeaturedDnd();
 }
 
 function openFeaturedForm(f) {
@@ -2516,11 +2584,11 @@ $('#btn-insert-img')?.addEventListener('click', async () => {
 async function loadHomeAdmin() {
   const carousel = $('#home-carousel-list');
   const allList = $('#home-all-list');
-  const newsList = $('#home-news-admin-list');
-  if (!carousel || !allList || !newsList) return;
+  const newsIn = $('#home-news-in');
+  const newsOut = $('#home-news-out');
+  if (!carousel || !allList || !newsIn || !newsOut) return;
   carousel.innerHTML = '<p class="page-sub">Загружаю…</p>';
   allList.innerHTML = '<p class="page-sub">Загружаю…</p>';
-  newsList.innerHTML = '<p class="page-sub">Загружаю…</p>';
   loadFeaturedAdmin();
   loadBrandNewsAdmin();
 
@@ -2644,26 +2712,92 @@ async function loadHomeAdmin() {
     });
   });
 
-  // новости на Главной
-  const nameById = Object.fromEntries(state.projects.map((p) => [p.id, p.name]));
-  const { data: news, error: nErr } = await sb.from('news').select('*').eq('home', true).order('published_at', { ascending: false });
-  if (nErr) { newsList.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(nErr.message)) + '</p>'; return; }
-  if (!news || !news.length) { newsList.innerHTML = '<p class="page-sub">Пусто. Отметьте «Показывать в «Последних новостях» на Главной» в редакторе новости.</p>'; return; }
-  newsList.innerHTML = news.map((n) =>
-    '<div class="home-news-admin-row" data-id="' + n.id + '">' +
-      '<div class="home-news-admin-meta"><b>' + escapeHtml(n.title) + '</b>' +
-        '<span class="page-sub">' + escapeHtml(n.tag || '') + ' · ' + escapeHtml(nameById[n.project_id] || ('Проект #' + n.project_id)) + ' · ' + new Date(n.published_at).toLocaleDateString('ru-RU') + '</span></div>' +
-      '<button class="btn btn-ghost btn-sm home-news-unpin">Снять с Главной</button>' +
-    '</div>').join('');
-  newsList.querySelectorAll('.home-news-admin-row').forEach((row) => {
-    row.querySelector('.home-news-unpin').addEventListener('click', async () => {
-      const { error } = await sb.from('news').update({ home: false }).eq('id', Number(row.dataset.id));
-      if (error) return toast(friendlyError(error.message), true);
-      toast('Новость снята с Главной.');
-      loadHomeAdmin();
-    });
-  });
+  // новости на Главной (две зоны: «на Главной» / «не на Главной», drag & drop)
+  {
+    const nameById = Object.fromEntries(state.projects.map((p) => [p.id, p.name]));
+    const projectLabel = (n) => n.project_id ? (nameById[n.project_id] || ('Проект #' + n.project_id)) : 'SAMOT';
+    const { data: allNews, error: nErr } = await sb.from('news').select('*').eq('active', true).order('sort', { ascending: true }).order('published_at', { ascending: false });
+    if (nErr) {
+      newsIn.innerHTML = '<p class="form-error">' + escapeHtml(friendlyError(nErr.message)) + '</p>';
+      newsOut.innerHTML = '';
+    } else {
+      const inNews = (allNews || []).filter((n) => n.home).sort((a, b) => (a.sort ?? 1000) - (b.sort ?? 1000) || new Date(b.published_at) - new Date(a.published_at));
+      const outNews = (allNews || []).filter((n) => !n.home).sort((a, b) => (a.sort ?? 1000) - (b.sort ?? 1000) || new Date(b.published_at) - new Date(a.published_at));
+      const renderNewsRow = (n, inCar) => {
+        const thumb = n.image_url ? '<img src="' + escapeHtml(n.image_url) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'" />' : '<span>📰</span>';
+        return '<div class="home-carousel-row" draggable="true" data-id="' + n.id + '" data-in="' + (inCar ? '1' : '0') + '">' +
+          '<div class="home-drag-handle" title="Потяните">⠿</div>' +
+          '<div class="home-carousel-thumb">' + thumb + '</div>' +
+          '<div class="home-carousel-meta"><b>' + escapeHtml(n.title) + '</b><span class="page-sub">' + escapeHtml((n.tag || 'Новости') + ' · ' + projectLabel(n) + ' · ' + new Date(n.published_at).toLocaleDateString('ru-RU')) + '</span></div>' +
+          (inCar ? '<button type="button" class="icon-btn home-news-unpin" title="Убрать с Главной">✕</button>' : '<span class="badge off">не на Главной</span>') +
+        '</div>';
+      };
+      newsIn.innerHTML = inNews.length ? inNews.map((n) => renderNewsRow(n, true)).join('') : '<p class="page-sub">Пусто. Перетащите новость сюда из нижнего списка.</p>';
+      newsOut.innerHTML = outNews.length ? outNews.map((n) => renderNewsRow(n, false)).join('') : '<p class="page-sub">Все активные новости уже на Главной.</p>';
+
+      const findNews = (id) => (allNews || []).find((x) => x.id === id);
+      const persistNewsOrder = async () => {
+        const rows = [...newsIn.querySelectorAll('.home-carousel-row[data-id]')];
+        await Promise.all(rows.map((row, i) =>
+          sb.from('news').update({ sort: i + 1, home: true }).eq('id', Number(row.dataset.id))));
+      };
+      const toggleNewsHome = async (id, targetHome) => {
+        const { error } = await sb.from('news').update({ home: targetHome }).eq('id', id);
+        if (error) return toast(friendlyError(error.message), true);
+        toast(targetHome ? 'Новость на Главной.' : 'Новость снята с Главной.');
+        loadHomeAdmin();
+      };
+
+      [newsIn, newsOut].forEach((zone) => {
+        zone.querySelectorAll('.home-news-unpin').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const row = btn.closest('.home-carousel-row');
+            await toggleNewsHome(Number(row.dataset.id), false);
+          });
+        });
+      });
+
+      const bindNewsDnd = () => {
+        [newsIn, newsOut].forEach((zone) => {
+          zone.addEventListener('dragover', (e) => e.preventDefault());
+          zone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const draggedId = Number(e.dataTransfer.getData('text/plain'));
+            if (!draggedId) return;
+            await toggleNewsHome(draggedId, zone === newsIn);
+          });
+        });
+        [...newsIn.querySelectorAll('.home-carousel-row'), ...newsOut.querySelectorAll('.home-carousel-row')].forEach((row) => {
+          row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', row.dataset.id); row.classList.add('dragging'); });
+          row.addEventListener('dragend', () => row.classList.remove('dragging'));
+          row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('dragover'); });
+          row.addEventListener('dragleave', () => row.classList.remove('dragover'));
+          row.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            row.classList.remove('dragover');
+            const draggedId = Number(e.dataTransfer.getData('text/plain'));
+            const targetId = Number(row.dataset.id);
+            if (!draggedId || draggedId === targetId) return;
+            const dragged = document.querySelector('#home-news-in [data-id="' + draggedId + '"], #home-news-out [data-id="' + draggedId + '"]');
+            const n = findNews(draggedId);
+            if (!dragged || !n) return;
+            const toIn = row.closest('#home-news-in') !== null;
+            if (toIn) {
+              const rect = row.getBoundingClientRect();
+              const before = e.clientY < rect.top + rect.height / 2;
+              newsIn.insertBefore(dragged, before ? row : row.nextSibling);
+              await persistNewsOrder();
+            } else {
+              await toggleNewsHome(draggedId, false);
+            }
+          });
+        });
+      };
+      bindNewsDnd();
+    }
+  }
 }
+
 
 
 
