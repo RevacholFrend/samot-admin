@@ -260,21 +260,9 @@ async function checkForAdminUpdate() {
     if (cmpSemver(latest, current) <= 0) return;
     state.adminUpdate = { latest, url, sha256: data.sha256 || '' };
     renderAdminUpdateBanner();
-    // Полностью автоматический режим: приложение само скачивает и ставит обновление.
-    // Не чаще одного раза в 24 ч на одну и ту же версию — иначе при неудачной тихой
-    // установке (нет прав в Program Files / отклонён UAC) получаем бесконечную петлю
-    // «скачал → закрылся → перезапустился → снова скачал». Кнопка «Обновить» остаётся всегда.
-    const AUTO_KEY = 'samot_admin_autoupdate_v1';
-    let lastAttempt = null;
-    try { lastAttempt = JSON.parse(localStorage.getItem(AUTO_KEY) || 'null'); } catch {}
-    const recent = lastAttempt
-      && lastAttempt.version === latest
-      && (Date.now() - Number(lastAttempt.at || 0)) < 24 * 3600 * 1000;
-    if (recent) return;
-    try {
-      localStorage.setItem(AUTO_KEY, JSON.stringify({ version: latest, at: Date.now() }));
-      await adminUpdateNow();
-    } catch { /* оставим кнопку на случай ошибки */ }
+    // Обновление — ТОЛЬКО по кнопке «Обновить». Никакого молчаливого скачивания при
+    // старте: приложение не будет закрываться само по себе, установка запустится
+    // осознанно, когда вы нажмёте «Обновить».
   } catch { /* офлайн или ранняя ошибка — молчим */ }
 }
 
