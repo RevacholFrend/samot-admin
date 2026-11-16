@@ -136,7 +136,7 @@
           <div class="section-head" style="margin: -10px -12px 12px -12px;"><span class="section-title">Официальные постеры SAMOT</span>
             <button type="button" class="btn btn-primary btn-sm" id="btn-add-featured" style="margin-left:auto">➕ Новый постер</button>
           </div>
-          <p class="page-sub" style="margin-top:6px">Отдельные рекламные слайды для карусели «Главной» — например, «Запуск v1.0.0», «SAMOT Summer Sale», «1000 игроков в Discord». Применяются только по клику «Опубликовать». Клик по изображениям — на CTA.</p>
+          <p class="page-sub" style="margin-top:6px">Отдельные рекламные слайды для карусели «Главной» — например, «Запуск v1.0.0», «SAMOT Summer Sale», «1000 игроков в Discord». Применяются только по клику «Опубликовать». Поведение кнопки: заполнена «Ссылка кнопки» — откроется ссылка; пуста, но заполнен «Текст «Подробнее»» — откроется окно с этим текстом; оба пусты — кнопки не будет (постер говорит сам за себя).</p>
           <div id="featured-list" class="featured-list"><p class="page-sub">Загружаем…</p></div>
 
           <div id="featured-form" class="hidden" style="margin-top:14px; padding:12px; border:1px solid var(--border); background: var(--card-2);">
@@ -150,16 +150,22 @@
               <input type="text" id="sf-featured-tagline" maxlength="160" placeholder="Большой запуск, приветствуем всех" />
             </label>
             <label class="field span-2">
-              <span>Ссылка на картинку (1920×975) * — только URL</span>
+              <span>Ссылка на картинку (1920×975) * — только URL (https)</span>
               <input type="url" id="sf-featured-image" required placeholder="https://…/festival.png" />
+              <small>Картинка должна открываться как файл в браузере. http и ссылки на страницы (не картинки) не загрузятся.</small>
             </label>
             <label class="field">
-              <span>Текст кнопки (CTA)</span>
-              <input type="text" id="sf-featured-cta-label" maxlength="20" placeholder="Смотреть" value="Смотреть" />
+              <span>Текст кнопки (необязательно)</span>
+              <input type="text" id="sf-featured-cta-label" maxlength="20" placeholder="Смотреть / Подробнее" />
             </label>
             <label class="field">
-              <span>Ссылка кнопки (CTA URL)</span>
-              <input type="url" id="sf-featured-cta-url" placeholder="https://…" />
+              <span>Ссылка кнопки (CTA URL, необязательно)</span>
+              <input type="url" id="sf-featured-cta-url" placeholder="https://… (если заполнено — кнопка открывает ссылку)" />
+            </label>
+            <label class="field span-2">
+              <span>Текст «Подробнее» в окне (опционально)</span>
+              <textarea id="sf-featured-body" rows="5" placeholder="Например, программа фестиваля: даты, место, правила участия…" style="font-family:inherit"></textarea>
+              <small>Сработает, если поле «Ссылка кнопки» пустое. Если и оно, и «Текст «Подробнее»» пусты — постер без кнопки, он говорит сам за себя.</small>
             </label>
             <label class="field">
               <span>Порядок (0 — первым)</span>

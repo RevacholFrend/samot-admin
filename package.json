@@ -1,6 +1,6 @@
 {
     "name": "samot-admin",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "SAMOT Admin — панель администратора и разработчика: проекты, новости, обновления клиента, баны, аналитика.",
     "main": "admin-main.js",
     "license": "MIT",

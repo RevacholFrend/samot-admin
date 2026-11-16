@@ -1934,9 +1934,10 @@ async function loadFeaturedAdmin() {
     const status = expired ? 'истёк' : (f.published ? 'виден' : 'скрыт');
     const statusClass = expired || !f.published ? 'off' : 'on';
     const sort = f.sort ?? 0;
+    const action = f.cta_url ? '🔗 ссылка' : (f.body ? '📄 подробнее' : '🚫 без кнопки');
     return '<div class="home-news-admin-row" data-id="' + f.id + '">' +
       '<div class="home-news-admin-meta"><b>' + escapeHtml(f.title) + '</b>' +
-        '<span class="page-sub">sort ' + sort + ' · ' + (f.cta_label || 'Смотреть') + ' → ' + escapeHtml(f.cta_url || '—') + '</span></div>' +
+        '<span class="page-sub">sort ' + sort + ' · ' + action + '</span></div>' +
       '<div style="display:flex; gap:6px; align-items:center">' +
         '<span class="badge ' + statusClass + '">' + status + '</span>' +
         '<button type="button" class="icon-btn featured-edit-btn" title="✏️ Редактировать">✏️</button>' +
@@ -1955,6 +1956,7 @@ async function loadFeaturedAdmin() {
         p_id: f.id, p_title: f.title, p_tagline: f.tagline,
         p_image_url: f.image_url, p_cta_label: f.cta_label, p_cta_url: f.cta_url,
         p_sort: f.sort, p_published: !f.published, p_expires_at: f.expires_at,
+        p_body: f.body || '',
       });
       if (error) return toast(friendlyError(error.message), true);
       toast(f.published ? 'Скрыт.' : 'Опубликован.');
@@ -1977,8 +1979,9 @@ function openFeaturedForm(f) {
   $('#sf-featured-title').value = f?.title || '';
   $('#sf-featured-tagline').value = f?.tagline || '';
   $('#sf-featured-image').value = f?.image_url || '';
-  $('#sf-featured-cta-label').value = f?.cta_label || 'Смотреть';
+  $('#sf-featured-cta-label').value = f?.cta_label || '';
   $('#sf-featured-cta-url').value = f?.cta_url || '';
+  if ($('#sf-featured-body')) $('#sf-featured-body').value = f?.body || '';
   $('#sf-featured-sort').value = String(f?.sort ?? 10);
   $('#sf-featured-published').checked = f ? !!f.published : true;
   $('#sf-featured-expires').value = f?.expires_at
@@ -1997,15 +2000,21 @@ async function saveFeatured() {
   const title = $('#sf-featured-title').value.trim();
   if (!title) return toast('Заголовок обязателен.', true);
   const image = $('#sf-featured-image').value.trim();
-  if (!/^https?:\/\//i.test(image)) return toast('Картинка должна начинаться с http(s)://', true);
+  if (!/^https:\/\//i.test(image)) return toast('Картинка должна начинаться с https:// (http не сработает в лаунчере)', true);
+  const ctaUrl = $('#sf-featured-cta-url').value.trim();
+  const body = $('#sf-featured-body') ? $('#sf-featured-body').value.trim() : '';
+  const labelInput = $('#sf-featured-cta-label').value.trim();
   const expiresRaw = $('#sf-featured-expires').value;
   const expiresISO = expiresRaw ? new Date(expiresRaw).toISOString() : null;
+  // Поведение кнопки выводится из полей: есть URL → ссылка; иначе есть body → «Подробнее»; иначе кнопки нет.
+  const ctaLabel = labelInput || (ctaUrl || body ? (body && !ctaUrl ? 'Подробнее' : 'Смотреть') : '');
   const payload = {
     p_id: id, p_title: title,
     p_tagline: $('#sf-featured-tagline').value.trim(),
     p_image_url: image,
-    p_cta_label: $('#sf-featured-cta-label').value.trim() || 'Смотреть',
-    p_cta_url: $('#sf-featured-cta-url').value.trim(),
+    p_cta_label: ctaLabel,
+    p_cta_url: ctaUrl,
+    p_body: body,
     p_sort: Number($('#sf-featured-sort').value) || 10,
     p_published: $('#sf-featured-published').checked,
     p_expires_at: expiresISO,
